@@ -7,6 +7,8 @@ diesel::table! {
         username -> Varchar,
         #[max_length = 255]
         password_hash -> Varchar,
+        #[max_length = 255]
+        session -> Nullable<Varchar>,
         created_at -> Nullable<Timestamptz>,
     }
 }
