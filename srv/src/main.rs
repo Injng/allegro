@@ -1,11 +1,12 @@
-use actix_web::{middleware, App, HttpServer};
 use actix_web::web::Data;
+use actix_web::{middleware, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenvy::dotenv;
 use std::{env, io};
 
 pub mod api;
+pub mod insert;
 pub mod models;
 pub mod schema;
 
@@ -27,8 +28,10 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(Data::new(pool.clone()))
             .wrap(middleware::Logger::default())
+            .service(api::auth::adduser)
             .service(api::auth::login)
-    }).bind("0.0.0.0:9000")?
-        .run()
-        .await
+    })
+    .bind("0.0.0.0:9000")?
+    .run()
+    .await
 }
