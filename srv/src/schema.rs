@@ -1,4 +1,10 @@
-// @generated automatically by Diesel CLI.
+/*
+ * schema.rs
+ * 
+ * This file defines the database schema for the allegro database using Diesel ORM.
+ * It specifies the structure and data types for each column in the database tables,
+ * This schema is used by Diesel to generate SQL and interact with the database.
+ */
 
 diesel::table! {
     users (id) {
