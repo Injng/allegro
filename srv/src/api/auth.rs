@@ -1,11 +1,14 @@
+use crate::models::User;
+
 use actix_web::web::{Data, Json};
 use actix_web::{HttpResponse, post, web};
 use chrono::NaiveDateTime;
-use crate::models::User;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::result::Error;
+use ring::pbkdf2;
 use serde::{Deserialize, Serialize};
+use std::num::NonZeroU32;
 use uuid::Uuid;
 
 #[derive(Deserialize, Serialize)]
@@ -38,21 +41,32 @@ fn db_login(auth_req: AuthRequest, conn: &mut PooledConnection<ConnectionManager
     // if user exists, check password and create session token
     match user {
         Ok(user) => {
-            if user.password_hash == auth_req.password {
-                let token = Uuid::new_v4().to_string();
-                let _ = diesel::update(users)
-                    .filter(username.eq(&auth_req.username))
-                    .set(session.eq(Some(token.clone())))
-                    .execute(conn);
-                Ok(AuthResponse {
-                    access: true,
-                    token: Some(token),
-                })
-            } else {
-                Ok(AuthResponse {
+            // verify the password hash with PBKDF2
+            let verify_res = pbkdf2::verify(
+                pbkdf2::PBKDF2_HMAC_SHA256,
+                NonZeroU32::new(100_000).unwrap(),
+                &user.salt.as_bytes(),
+                auth_req.password.as_bytes(),
+                &user.password_hash.as_bytes(),
+            );
+
+            // if the password is correct, create a session token
+            match verify_res {
+                Ok(_) => {
+                    let token = Uuid::new_v4().to_string();
+                    let _ = diesel::update(users)
+                        .filter(username.eq(&auth_req.username))
+                        .set(session.eq(Some(token.clone())))
+                        .execute(conn);
+                    Ok(AuthResponse {
+                        access: true,
+                        token: Some(token),
+                    })
+                }
+                Err(_) => Ok(AuthResponse {
                     access: false,
                     token: None,
-                })
+                }),
             }
         }
         Err(_) => Ok(AuthResponse {
