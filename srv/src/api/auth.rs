@@ -123,10 +123,20 @@ fn db_adduser<T>(
         &mut password_hash,
     );
 
+    // insert new user into admin if admin privileges are not required
+    if !is_admin {
+        let new_admin = insert::NewAdmin {
+            username: adduser_req.username.clone(),
+        };
+        let _ = diesel::insert_into(admin::dsl::admin)
+            .values(&new_admin)
+            .execute(conn);
+    }
+
     // insert the new user into the database
     let new_user = insert::NewUser {
         username: adduser_req.username,
-        password_hash: String::from_utf8(password_hash.to_vec()).unwrap(),
+        password_hash: hex::encode(password_hash),
         salt,
         session: None,
         created_at: None,
@@ -169,7 +179,7 @@ fn db_login(
         NonZeroU32::new(PBKDF2_ITER).unwrap(),
         &user.salt.as_bytes(),
         auth_req.password.as_bytes(),
-        &user.password_hash.as_bytes(),
+        &hex::decode(user.password_hash).unwrap(),
     );
 
     // if the password is correct, create a session token and set time created

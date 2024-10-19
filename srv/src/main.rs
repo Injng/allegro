@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::web::Data;
 use actix_web::{middleware, App, HttpServer};
 use diesel::prelude::*;
@@ -25,9 +26,15 @@ async fn main() -> io::Result<()> {
 
     // create a new API server
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
         App::new()
             .app_data(Data::new(pool.clone()))
             .wrap(middleware::Logger::default())
+            .wrap(cors)
             .service(api::auth::adduser)
             .service(api::auth::countuser)
             .service(api::auth::login)

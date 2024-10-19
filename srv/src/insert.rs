@@ -11,3 +11,10 @@ pub struct NewUser {
     pub session: Option<String>,
     pub created_at: Option<NaiveDateTime>,
 }
+
+/// Represents a new user to insert into the admin table.
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::admin)]
+pub struct NewAdmin {
+    pub username: String,
+}
