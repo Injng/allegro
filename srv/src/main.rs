@@ -29,6 +29,7 @@ async fn main() -> io::Result<()> {
             .app_data(Data::new(pool.clone()))
             .wrap(middleware::Logger::default())
             .service(api::auth::adduser)
+            .service(api::auth::countuser)
             .service(api::auth::login)
     })
     .bind("0.0.0.0:9000")?

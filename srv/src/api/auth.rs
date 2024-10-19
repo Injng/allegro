@@ -2,7 +2,7 @@ use crate::insert;
 use crate::models::{Admin, User};
 
 use actix_web::web::{Data, Json};
-use actix_web::{post, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
@@ -19,9 +19,9 @@ const HASH_LEN: usize = digest::SHA256_OUTPUT_LEN;
 
 /// Generic response to denote whether operation was successful
 #[derive(Deserialize, Serialize)]
-pub struct Response {
+pub struct Response<T> {
     pub success: bool,
-    pub message: String,
+    pub message: T,
 }
 
 /// Return whether access is granted and a session token to an authorization request.
@@ -53,11 +53,22 @@ pub struct Session {
     pub created_at: NaiveDateTime,
 }
 
+/// Return the number of users in the database
+fn db_countuser<T>(conn: &mut PooledConnection<ConnectionManager<PgConnection>>) -> Response<i64> {
+    use crate::schema::users;
+
+    let num_users: i64 = users::dsl::users.count().get_result(conn).unwrap();
+    Response {
+        success: true,
+        message: num_users,
+    }
+}
+
 /// Add the user to the database, checking if admin privileges are required
-fn db_adduser(
+fn db_adduser<T>(
     adduser_req: AddUserRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-) -> Response {
+) -> Response<String> {
     use crate::schema::admin;
     use crate::schema::users;
 
@@ -185,6 +196,28 @@ fn db_login(
     }
 }
 
+/// Get the number of users registered
+#[get("/auth/countuser")]
+pub async fn countuser(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> HttpResponse {
+    // get the countuser response from the database
+    let mut conn = pool.get().expect("Connection pool error");
+    let countuser_response = web::block(move || db_countuser::<i64>(&mut conn)).await;
+
+    // return the appropriate response and handle errors
+    match countuser_response {
+        Ok(response) => {
+            // handle case where server successfuly processes the request
+            HttpResponse::Ok()
+                .content_type("application/json")
+                .json(response)
+        }
+        _ => {
+            // handle case where server error occurs
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
 /// Add a user to the system, and determine if admin privileges are required
 #[post("/auth/adduser")]
 pub async fn adduser(
@@ -194,7 +227,7 @@ pub async fn adduser(
     // get the adduser response from database
     let mut conn = pool.get().expect("Connection pool error");
     let adduser_response =
-        web::block(move || db_adduser(adduser_req.into_inner(), &mut conn)).await;
+        web::block(move || db_adduser::<String>(adduser_req.into_inner(), &mut conn)).await;
 
     // return the appropriate response and handle errors
     match adduser_response {
