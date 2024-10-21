@@ -7,7 +7,11 @@
     import * as Tabs from "$lib/ui/ui/tabs/index.js";
     import { ScrollArea } from "$lib/ui/ui/scroll-area/index.js";
     import { Input } from "$lib/ui/ui/input/index.js";
+    import * as Dialog from "$lib/ui/ui/dialog/index.js";
     import type { Release } from "$lib/types";
+    import { Label } from "$lib/ui/ui/label/index.js";
+
+    import AddMusic from "$lib/AddMusic.svelte";
 
     let playlists: string[] = ["Test"];
     let releases: Release[] = [
@@ -38,12 +42,7 @@
                                 />
                             </div>
                             <div class="ml-auto mr-4">
-                                <Button
-                                    variant="secondary"
-                                    class="bg-slate-800 hover:bg-slate-700"
-                                >
-                                    Add music
-                                </Button>
+                                <AddMusic />
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
