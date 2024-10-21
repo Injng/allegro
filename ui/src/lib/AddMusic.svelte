@@ -5,6 +5,8 @@
     import * as Tabs from "$lib/ui/ui/tabs";
     import * as Dialog from "$lib/ui/ui/dialog";
 
+    import TextArea from "$lib/TextArea.svelte";
+
     let file: File | null = null;
 
     function handleFileChange(event: Event) {
@@ -69,7 +71,7 @@
                 <div class="grid gap-4 py-4">
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="piece" class="text-right text-slate-400"
-                            >Piece</Label
+                            >Piece*</Label
                         >
                         <Input
                             id="piece"
@@ -79,8 +81,19 @@
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
+                        <Label for="release" class="text-right text-slate-400"
+                            >Release*</Label
+                        >
+                        <Input
+                            id="release"
+                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                            required
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="artist" class="text-right text-slate-400"
-                            >Artist</Label
+                            >Artist*</Label
                         >
                         <Input
                             id="artist"
@@ -91,7 +104,7 @@
 
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="file" class="text-right text-slate-400"
-                            >Recording</Label
+                            >Recording*</Label
                         >
                         <Input
                             type="file"
@@ -109,7 +122,7 @@
                 <div class="grid gap-4 py-4">
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="title" class="text-right text-slate-400"
-                            >Title</Label
+                            >Title*</Label
                         >
                         <Input
                             id="title"
@@ -119,8 +132,21 @@
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
+                        <Label for="movements" class="text-right text-slate-400"
+                            >Movements</Label
+                        >
+                        <Input
+                            type="number"
+                            id="title"
+                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                            min={0}
+                            step={1}
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="composer" class="text-right text-slate-400"
-                            >Composer</Label
+                            >Composer*</Label
                         >
                         <Input
                             id="composer"
@@ -144,9 +170,10 @@
                             for="description"
                             class="text-right text-slate-400">Description</Label
                         >
-                        <Input
-                            id="description"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                        <TextArea
+                            rows={6}
+                            placeholder="Enter a detailed description..."
+                            classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
                         />
                     </div>
                 </div>
@@ -156,7 +183,7 @@
                 <div class="grid gap-4 py-4">
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="title" class="text-right text-slate-400"
-                            >Release Title</Label
+                            >Release Title*</Label
                         >
                         <Input
                             id="title"
@@ -167,7 +194,7 @@
 
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="artist" class="text-right text-slate-400"
-                            >Artist</Label
+                            >Artist*</Label
                         >
                         <Input
                             id="artist"
@@ -181,9 +208,10 @@
                             for="description"
                             class="text-right text-slate-400">Description</Label
                         >
-                        <Input
-                            id="description"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                        <TextArea
+                            rows={6}
+                            placeholder="Enter a detailed description..."
+                            classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
                         />
                     </div>
 
@@ -205,33 +233,35 @@
             <Tabs.Content value="artist">
                 <div class="grid gap-4 py-4">
                     <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="piece" class="text-right text-slate-400"
-                            >Piece</Label
+                        <Label for="name" class="text-right text-slate-400"
+                            >Artist Name*</Label
                         >
                         <Input
-                            id="piece"
+                            id="name"
                             class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
                         />
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="artist" class="text-right text-slate-400"
-                            >Artist</Label
+                        <Label
+                            for="description"
+                            class="text-right text-slate-400">Description</Label
                         >
-                        <Input
-                            id="artist"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                        <TextArea
+                            rows={6}
+                            placeholder="Enter a detailed description..."
+                            classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
                         />
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="file" class="text-right text-slate-400"
-                            >Recording</Label
+                            >Image</Label
                         >
                         <Input
                             type="file"
                             id="file"
-                            accept="audio/*"
+                            accept="image/*"
                             on:change={handleFileChange}
                             class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
                         />
