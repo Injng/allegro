@@ -17,7 +17,7 @@ export const actions: Actions = {
 
     try {
       const has_image = image.size > 0;
-      const response = await api.post("/music/addartist", {
+      const response = await api.post("/music/add/artist", {
         name,
         description,
         has_image,

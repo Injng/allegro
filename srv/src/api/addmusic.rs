@@ -101,7 +101,7 @@ fn db_addartist<T>(
 }
 
 /// Add an artist to the database
-#[post("/music/addartist")]
+#[post("/music/add/artist")]
 pub async fn addartist(
     addartist_req: Json<AddArtistRequest>,
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
