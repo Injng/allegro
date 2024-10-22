@@ -25,7 +25,7 @@ pub struct Response<T> {
 }
 
 /// Return whether access is granted and a session token to an authorization request.
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct AuthResponse {
     pub access: bool,
     pub token: Option<String>,

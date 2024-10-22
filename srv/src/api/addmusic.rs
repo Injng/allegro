@@ -14,7 +14,7 @@ pub struct Response<T> {
     pub message: T,
 }
 
-/// An request to add an artist
+/// A request to add an artist
 #[derive(Deserialize, Serialize)]
 pub struct AddArtistRequest {
     pub name: String,
