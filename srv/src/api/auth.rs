@@ -3,7 +3,7 @@ use crate::models::{Admin, User};
 
 use actix_web::web::{Data, Json};
 use actix_web::{get, post, web, HttpResponse};
-use chrono::NaiveDateTime;
+use chrono::{Duration, NaiveDateTime};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use diesel::result::Error;
@@ -185,6 +185,20 @@ fn db_login(
     // if the password is correct, create a session token and set time created
     match verify_res {
         Ok(_) => {
+            // check if token already exists and has not expired (1 week)
+            if let Some(token) = user.session {
+                if let Some(created_at) = user.created_at {
+                    let now = chrono::Utc::now().naive_utc();
+                    if now - created_at < Duration::days(7) {
+                        return Ok(AuthResponse {
+                            access: true,
+                            token: Some(token),
+                        });
+                    }
+                }
+            }
+
+            // otherwise, create a new token
             let token = Uuid::new_v4().to_string();
             let timestamp: NaiveDateTime = chrono::Utc::now().naive_utc();
             let _ = diesel::update(users::dsl::users)
