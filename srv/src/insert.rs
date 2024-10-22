@@ -12,9 +12,18 @@ pub struct NewUser {
     pub created_at: Option<NaiveDateTime>,
 }
 
-/// Represents a new user to insert into the admin table.
+/// Represents a new user to insert into the admin table
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::admin)]
 pub struct NewAdmin {
     pub username: String,
+}
+
+/// Represents a new artist to insert into the artists table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::artists)]
+pub struct NewArtist {
+    pub name: String,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
 }
