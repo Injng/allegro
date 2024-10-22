@@ -38,6 +38,7 @@ async fn main() -> io::Result<()> {
             .service(api::auth::adduser)
             .service(api::auth::countuser)
             .service(api::auth::login)
+            .service(api::addmusic::addartist)
     })
     .bind("0.0.0.0:9000")?
     .run()

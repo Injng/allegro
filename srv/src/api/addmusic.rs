@@ -15,11 +15,11 @@ pub struct Response<T> {
 }
 
 /// A request to add an artist
-#[derive(Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddArtistRequest {
     pub name: String,
     pub description: Option<String>,
-    pub image_path: Option<String>,
+    pub has_image: bool,
     pub token: String,
 }
 
@@ -60,15 +60,16 @@ fn check_admin(
 fn db_addartist<T>(
     addartist_req: AddArtistRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-) -> Response<i32> {
+) -> Response<String> {
     use crate::schema::artists;
 
+    println!("AddArtist request: {:?}", addartist_req.clone());
     // check for admin privileges
     let is_admin: bool = check_admin(addartist_req.token, conn);
     if !is_admin {
         return Response {
             success: false,
-            message: -1,
+            message: "User is not an admin".to_string(),
         };
     }
 
@@ -76,22 +77,32 @@ fn db_addartist<T>(
     let new_artist = insert::NewArtist {
         name: addartist_req.name,
         description: addartist_req.description,
-        image_path: addartist_req.image_path,
+        image_path: None,
     };
     let artist_id: i32 = diesel::insert_into(artists::dsl::artists)
         .values(&new_artist)
         .returning(artists::dsl::id)
         .get_result(conn)
         .unwrap();
+
+    // actual image path is artist-[artist id]
+    let mut new_image_path = String::new();
+    if addartist_req.has_image {
+        new_image_path = format!("artist-{}", artist_id);
+        diesel::update(artists::dsl::artists.find(artist_id))
+            .set(artists::dsl::image_path.eq(new_image_path.clone()))
+            .execute(conn)
+            .unwrap();
+    }
     Response {
         success: true,
-        message: artist_id,
+        message: new_image_path,
     }
 }
 
 /// Add an artist to the database
 #[post("/music/addartist")]
-pub async fn adduser(
+pub async fn addartist(
     addartist_req: Json<AddArtistRequest>,
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> HttpResponse {

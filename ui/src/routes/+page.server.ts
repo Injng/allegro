@@ -24,12 +24,10 @@ export const actions: Actions = {
         secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
-      console.log("reached");
 
       return redirect(303, "/allegro");
     } catch {
       return redirect(303, "/");
-      // return fail(400, { error: "Invalid credentials" });
     }
   },
 

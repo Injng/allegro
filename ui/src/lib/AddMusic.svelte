@@ -4,10 +4,10 @@
     import { Label } from "$lib/ui/ui/label";
     import * as Tabs from "$lib/ui/ui/tabs";
     import * as Dialog from "$lib/ui/ui/dialog";
-
     import TextArea from "$lib/TextArea.svelte";
 
-    let file: File | null = null;
+    import { enhance } from "$app/forms";
+    import type { ActionResult } from "@sveltejs/kit";
 
     function handleFileChange(event: Event) {
         const target = event.target as HTMLInputElement;
@@ -17,8 +17,26 @@
                 target.value = "";
                 return;
             }
-            file = target.files[0];
         }
+    }
+
+    let artistName = "";
+    let artistDescription = "";
+
+    function handleSubmit() {
+        return async ({ result }: { result: ActionResult }) => {
+            if (result.type === "success") {
+                artistName = "";
+                artistDescription = "";
+                if (document) {
+                    (
+                        document.getElementById(
+                            "artistFile",
+                        ) as HTMLInputElement
+                    ).value = "";
+                }
+            }
+        };
     }
 </script>
 
@@ -116,6 +134,13 @@
                         />
                     </div>
                 </div>
+                <div class="flex justify-end mt-4">
+                    <Button
+                        type="submit"
+                        class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                        >Add recording</Button
+                    >
+                </div>
             </Tabs.Content>
 
             <Tabs.Content value="piece">
@@ -177,6 +202,13 @@
                         />
                     </div>
                 </div>
+                <div class="flex justify-end mt-4">
+                    <Button
+                        type="submit"
+                        class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                        >Add piece</Button
+                    >
+                </div>
             </Tabs.Content>
 
             <Tabs.Content value="release">
@@ -228,54 +260,73 @@
                         />
                     </div>
                 </div>
+                <div class="flex justify-end mt-4">
+                    <Button
+                        type="submit"
+                        class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                        >Add release</Button
+                    >
+                </div>
             </Tabs.Content>
 
             <Tabs.Content value="artist">
-                <div class="grid gap-4 py-4">
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="name" class="text-right text-slate-400"
-                            >Artist Name*</Label
-                        >
-                        <Input
-                            id="name"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                        />
-                    </div>
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    action="?/addartist"
+                    use:enhance={handleSubmit}
+                >
+                    <div class="grid gap-4 py-4">
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="name" class="text-right text-slate-400"
+                                >Artist Name*</Label
+                            >
+                            <Input
+                                id="name"
+                                name="name"
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                                bind:value={artistName}
+                            />
+                        </div>
 
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label
-                            for="description"
-                            class="text-right text-slate-400">Description</Label
-                        >
-                        <TextArea
-                            rows={6}
-                            placeholder="Enter a detailed description..."
-                            classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                        />
-                    </div>
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                for="description"
+                                class="text-right text-slate-400"
+                                >Description</Label
+                            >
+                            <TextArea
+                                rows={6}
+                                placeholder="Enter a detailed description..."
+                                name="description"
+                                classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                                bind:value={artistDescription}
+                            />
+                        </div>
 
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="file" class="text-right text-slate-400"
-                            >Image</Label
-                        >
-                        <Input
-                            type="file"
-                            id="file"
-                            accept="image/*"
-                            on:change={handleFileChange}
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
-                        />
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="file" class="text-right text-slate-400"
+                                >Image</Label
+                            >
+                            <Input
+                                type="file"
+                                name="file"
+                                id="artistFile"
+                                accept="image/*"
+                                on:change={handleFileChange}
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
+                            />
+                        </div>
                     </div>
-                </div>
-            </Tabs.Content>
-        </Tabs.Root>
-
-        <Dialog.Footer>
-            <Button
-                type="submit"
-                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                >Save changes</Button
+                    <div class="flex justify-end mt-4">
+                        <Button
+                            type="submit"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                            >Add artist</Button
+                        >
+                    </div>
+                </form></Tabs.Content
             >
-        </Dialog.Footer>
+        </Tabs.Root>
     </Dialog.Content>
 </Dialog.Root>
