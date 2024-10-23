@@ -27,3 +27,13 @@ pub struct NewArtist {
     pub description: Option<String>,
     pub image_path: Option<String>,
 }
+
+/// Represents a new release to insert into the releases table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::releases)]
+pub struct NewRelease {
+    pub name: String,
+    pub artist_id: i32,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}

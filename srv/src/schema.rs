@@ -18,6 +18,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    releases (id) {
+        id -> Int4,
+        name -> Varchar,
+        artist_id -> Int4,
+        description -> Nullable<Text>,
+        image_path -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Int4,
         #[max_length = 50]
@@ -32,8 +42,11 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(releases -> artists (artist_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     admin,
     artists,
+    releases,
     users,
 );

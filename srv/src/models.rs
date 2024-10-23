@@ -31,3 +31,14 @@ pub struct Artist {
     pub description: Option<String>,
     pub image_path: Option<String>,
 }
+
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::releases)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct Release {
+    pub id: i32,
+    pub name: String,
+    pub artist_id: i32,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}

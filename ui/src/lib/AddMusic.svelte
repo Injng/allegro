@@ -1,4 +1,5 @@
 <script lang="ts">
+    import * as Alert from "$lib/ui/ui/alert";
     import { Button } from "$lib/ui/ui/button";
     import * as Command from "$lib/ui/ui/command";
     import { Input } from "$lib/ui/ui/input";
@@ -9,6 +10,7 @@
 
     import { enhance } from "$app/forms";
     import type { ActionResult } from "@sveltejs/kit";
+    import { fade } from "svelte/transition";
     import type { Artist } from "./types";
     import axios from "axios";
 
@@ -24,22 +26,31 @@
         }
     }
 
-    // handle submission by clearing form
-    let artistName = "";
-    let artistDescription = "";
+    // handle submission by displaying alert for success or error
+    let showAlert = false;
+    let alertType: "success" | "error" = "success";
+    let alertMessage = "";
     function handleSubmit() {
         return async ({ result }: { result: ActionResult }) => {
+            console.log(result);
             if (result.type === "success") {
-                artistName = "";
-                artistDescription = "";
-                if (document) {
-                    (
-                        document.getElementById(
-                            "artistFile",
-                        ) as HTMLInputElement
-                    ).value = "";
-                }
+                alertType = "success";
+                alertMessage = "Successfully added";
+                showAlert = true;
+            } else if (result.type === "failure") {
+                alertType = "error";
+                alertMessage = `Error: ${result.data?.error || "An unknown error occurred"}`;
+                showAlert = true;
+            } else if (result.type === "redirect") {
+                alertType = "error";
+                alertMessage = "Error: Server API error";
+                showAlert = true;
             }
+
+            // hide alert after a few seconds
+            setTimeout(() => {
+                showAlert = false;
+            }, 3000);
         };
     }
 
@@ -48,8 +59,10 @@
 
     // handle search dialog select
     let selectedArtistName = "";
+    let selectedArtistId: number = 0;
     function handleArtistSelect(artist: Artist) {
         selectedArtistName = artist.name;
+        selectedArtistId = artist.id;
         open = false;
     }
 
@@ -103,6 +116,26 @@
                 Upload recordings and set metadata here.
             </Dialog.Description>
         </Dialog.Header>
+
+        <div class="fixed bottom-4 left-4 z-100">
+            {#if showAlert}
+                <div out:fade={{ duration: 300 }}>
+                    <Alert.Root
+                        variant={alertType === "success"
+                            ? "default"
+                            : "destructive"}
+                        class="mb-2 max-w-md"
+                    >
+                        <Alert.Title
+                            >{alertType === "success"
+                                ? "Success"
+                                : "Error"}</Alert.Title
+                        >
+                        <Alert.Description>{alertMessage}</Alert.Description>
+                    </Alert.Root>
+                </div>
+            {/if}
+        </div>
 
         <Tabs.Root value="recording" class="w-full">
             <Tabs.List
@@ -261,102 +294,119 @@
             </Tabs.Content>
 
             <Tabs.Content value="release">
-                <div class="grid gap-4 py-4">
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="title" class="text-right text-slate-400"
-                            >Release Title*</Label
-                        >
-                        <Input
-                            id="title"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
-                    </div>
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    action="?/addrelease"
+                    use:enhance={handleSubmit}
+                >
+                    <div class="grid gap-4 py-4">
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="title" class="text-right text-slate-400"
+                                >Release Title*</Label
+                            >
+                            <Input
+                                id="title"
+                                name="name"
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                                required
+                            />
+                        </div>
 
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="artist" class="text-right text-slate-400"
-                            >Artist*</Label
-                        >
-                        <div class="col-span-3">
-                            <Button
-                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                                on:click={searchArtists}
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                for="artist"
+                                class="text-right text-slate-400">Artist*</Label
                             >
-                                {selectedArtistName ||
-                                    "Search for an artist..."}
-                            </Button>
-                            <Command.Dialog
-                                bind:open
-                                class="bg-slate-900 border border-slate-700"
-                            >
-                                <Command.Input
-                                    placeholder="Search artists..."
-                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
-                                    bind:value={artistSearch}
-                                />
-                                <Command.List
-                                    class="bg-slate-900 text-slate-50"
+                            <div class="col-span-3">
+                                <Button
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                    on:click={searchArtists}
                                 >
-                                    {#if loadingArtists}
-                                        <Command.Empty
-                                            class="py-6 text-center text-sm text-slate-400"
-                                        >
-                                            Loading...
-                                        </Command.Empty>
-                                    {:else}
-                                        <Command.Group class="p-1">
-                                            {#each artists as artist (artist.id)}
-                                                <Command.Item
-                                                    value={artist.name}
-                                                    onSelect={() =>
-                                                        handleArtistSelect(
-                                                            artist,
-                                                        )}
-                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
-                                                >
-                                                    {artist.name}
-                                                </Command.Item>
-                                            {/each}
-                                        </Command.Group>
-                                    {/if}
-                                </Command.List>
-                            </Command.Dialog>
+                                    {selectedArtistName ||
+                                        "Search for an artist..."}
+                                </Button>
+                                <input
+                                    type="hidden"
+                                    name="artist"
+                                    value={selectedArtistId}
+                                />
+                                <Command.Dialog
+                                    bind:open
+                                    class="bg-slate-900 border border-slate-700"
+                                >
+                                    <Command.Input
+                                        placeholder="Search artists..."
+                                        class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                        bind:value={artistSearch}
+                                    />
+                                    <Command.List
+                                        class="bg-slate-900 text-slate-50"
+                                    >
+                                        {#if loadingArtists}
+                                            <Command.Empty
+                                                class="py-6 text-center text-sm text-slate-400"
+                                            >
+                                                Loading...
+                                            </Command.Empty>
+                                        {:else}
+                                            <Command.Group class="p-1">
+                                                {#each artists as artist (artist.id)}
+                                                    <Command.Item
+                                                        value={artist.name}
+                                                        onSelect={() =>
+                                                            handleArtistSelect(
+                                                                artist,
+                                                            )}
+                                                        class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                    >
+                                                        {artist.name}
+                                                    </Command.Item>
+                                                {/each}
+                                            </Command.Group>
+                                        {/if}
+                                    </Command.List>
+                                </Command.Dialog>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                for="description"
+                                class="text-right text-slate-400"
+                                >Description</Label
+                            >
+                            <TextArea
+                                rows={6}
+                                name="description"
+                                placeholder="Enter a detailed description..."
+                                classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="file" class="text-right text-slate-400"
+                                >Cover Art</Label
+                            >
+                            <Input
+                                type="file"
+                                name="file"
+                                id="file"
+                                accept="image/*"
+                                on:change={handleFileChange}
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
+                            />
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label
-                            for="description"
-                            class="text-right text-slate-400">Description</Label
+                    <div class="flex justify-end mt-4">
+                        <Button
+                            type="submit"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                            >Add release</Button
                         >
-                        <TextArea
-                            rows={6}
-                            placeholder="Enter a detailed description..."
-                            classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                        />
                     </div>
-
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="file" class="text-right text-slate-400"
-                            >Cover Art</Label
-                        >
-                        <Input
-                            type="file"
-                            id="file"
-                            accept="image/*"
-                            on:change={handleFileChange}
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
-                        />
-                    </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                        >Add release</Button
-                    >
-                </div>
-            </Tabs.Content>
+                </form></Tabs.Content
+            >
 
             <Tabs.Content value="artist">
                 <form
@@ -374,7 +424,7 @@
                                 id="name"
                                 name="name"
                                 class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                                bind:value={artistName}
+                                required
                             />
                         </div>
 
@@ -389,7 +439,6 @@
                                 placeholder="Enter a detailed description..."
                                 name="description"
                                 classname="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                                bind:value={artistDescription}
                             />
                         </div>
 
