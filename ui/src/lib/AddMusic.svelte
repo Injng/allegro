@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Button } from "$lib/ui/ui/button";
+    import * as Command from "$lib/ui/ui/command";
     import { Input } from "$lib/ui/ui/input";
     import { Label } from "$lib/ui/ui/label";
     import * as Tabs from "$lib/ui/ui/tabs";
@@ -8,7 +9,10 @@
 
     import { enhance } from "$app/forms";
     import type { ActionResult } from "@sveltejs/kit";
+    import type { Artist } from "./types";
+    import axios from "axios";
 
+    // ensure files are less than 300 MB
     function handleFileChange(event: Event) {
         const target = event.target as HTMLInputElement;
         if (target.files?.[0]) {
@@ -20,9 +24,9 @@
         }
     }
 
+    // handle submission by clearing form
     let artistName = "";
     let artistDescription = "";
-
     function handleSubmit() {
         return async ({ result }: { result: ActionResult }) => {
             if (result.type === "success") {
@@ -37,6 +41,51 @@
                 }
             }
         };
+    }
+
+    // open search dialog
+    let open = false;
+
+    // handle search dialog select
+    let selectedArtistName = "";
+    function handleArtistSelect(artist: Artist) {
+        selectedArtistName = artist.name;
+        open = false;
+    }
+
+    // set axios api
+    const api = axios.create({
+        baseURL: "http://localhost:9000",
+    });
+
+    // search for artists
+    let artistSearch = "";
+    let loadingArtists = true;
+    let artists: Artist[] = [];
+    async function searchArtists() {
+        open = true;
+        if (!loadingArtists) {
+            return;
+        }
+        loadingArtists = true;
+        try {
+            const response = await api.get("/music/get/artists");
+            console.log(response.data);
+            for (let a of response.data.message) {
+                let artist: Artist = {
+                    id: a.id,
+                    name: a.name,
+                    description: a.description,
+                    image_path: a.image_path,
+                };
+                artists.push(artist);
+            }
+        } catch (error) {
+            console.error("Error fetching artists:", error);
+            artists = [];
+        } finally {
+            loadingArtists = false;
+        }
     }
 </script>
 
@@ -228,11 +277,51 @@
                         <Label for="artist" class="text-right text-slate-400"
                             >Artist*</Label
                         >
-                        <Input
-                            id="artist"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={searchArtists}
+                            >
+                                {selectedArtistName ||
+                                    "Search for an artist..."}
+                            </Button>
+                            <Command.Dialog
+                                bind:open
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search artists..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={artistSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingArtists}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each artists as artist (artist.id)}
+                                                <Command.Item
+                                                    value={artist.name}
+                                                    onSelect={() =>
+                                                        handleArtistSelect(
+                                                            artist,
+                                                        )}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {artist.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
