@@ -1,4 +1,5 @@
 <script lang="ts">
+    import * as Alert from "$lib/ui/ui/alert/index.js";
     import { Button } from "$lib/ui/ui/button/index.js";
     import * as Card from "$lib/ui/ui/card/index.js";
     import { Input } from "$lib/ui/ui/input/index.js";
@@ -7,6 +8,7 @@
     import axios from "axios";
     import { enhance } from "$app/forms";
     import { type ActionResult } from "@sveltejs/kit";
+    import { fade } from "svelte/transition";
     import { goto } from "$app/navigation";
     import { onMount } from "svelte";
 
@@ -42,16 +44,37 @@
     }
 
     // handle form submission and return value from server
+    let showAlert: boolean = false;
+    let errorMessage = "";
     function handleEnhance() {
         return async ({ result }: { result: ActionResult }) => {
-            if (result.type !== "failure") {
+            if (result.type === "success") {
                 await goto("/allegro");
+            } else if (result.type === "failure") {
+                showAlert = true;
+                errorMessage = `Error: ${result.data?.error || "Authentication error occurred"}`;
             }
+
+            // hide alert after a few seconds
+            setTimeout(() => {
+                showAlert = false;
+            }, 3000);
         };
     }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-black p-4">
+    <div class="fixed bottom-4 left-4 z-100">
+        {#if showAlert}
+            <div out:fade={{ duration: 300 }}>
+                <Alert.Root variant="destructive" class="mb-2 max-w-md">
+                    <Alert.Title>Error</Alert.Title>
+                    <Alert.Description>{errorMessage}</Alert.Description>
+                </Alert.Root>
+            </div>
+        {/if}
+    </div>
+
     <Card.Root class="w-full max-w-sm bg-black text-white border-white/20">
         {#if isFirstUser}
             <Card.Header>

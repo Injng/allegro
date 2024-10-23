@@ -1,5 +1,5 @@
 import type { Actions } from "./$types";
-import { fail, redirect } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
 import axios from "axios";
 
 const api = axios.create({
@@ -12,9 +12,25 @@ export const actions: Actions = {
     const username = data.get("username");
     const password = data.get("password");
 
+    // ensure username is not empty
+    if (username === "" || username === null) {
+      return fail(400, { error: "Username cannot be empty" });
+    }
+
+    // ensure password is not empty
+    if (password === "" || password === null) {
+      return fail(400, { error: "Password cannot be empty" });
+    }
+
     try {
       const response = await api.post("/auth/login", { username, password });
       const token = response.data.token;
+
+      console.log(response);
+      // ensure the response is successful
+      if (!response.data.access) {
+        return fail(400, { error: "Login failed" });
+      }
 
       // Set the token as a cookie
       cookies.set("token", token, {
@@ -25,9 +41,9 @@ export const actions: Actions = {
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
 
-      return redirect(303, "/allegro");
+      return { success: true };
     } catch {
-      return redirect(303, "/");
+      return fail(400, { error: "Server error" });
     }
   },
 
@@ -36,6 +52,14 @@ export const actions: Actions = {
     const username = data.get("username");
     const password = data.get("password");
     const verifyPassword = data.get("verifyPassword");
+
+    if (username === "") {
+      return fail(400, { error: "Username cannot be empty" });
+    }
+
+    if (password === "") {
+      return fail(400, { error: "Password cannot be empty" });
+    }
 
     if (password !== verifyPassword) {
       return fail(400, { error: "Passwords do not match" });
@@ -49,6 +73,11 @@ export const actions: Actions = {
       });
       const token = response.data.token;
 
+      // ensure the response is successful
+      if (!response.data.success) {
+        return fail(400, { error: "Add user failed" });
+      }
+
       // Set the token as a cookie
       cookies.set("token", token, {
         path: "/",
@@ -58,7 +87,7 @@ export const actions: Actions = {
         maxAge: 60 * 60 * 24 * 7, // 1 week
       });
 
-      return redirect(303, "/allegro");
+      return { success: true };
     } catch {
       return fail(400, { error: "Failed to create admin user" });
     }

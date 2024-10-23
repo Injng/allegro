@@ -1,5 +1,5 @@
 import type { Actions } from "./$types";
-import { fail, redirect } from "@sveltejs/kit";
+import { fail } from "@sveltejs/kit";
 import { writeFile } from "fs/promises";
 import axios from "axios";
 
@@ -54,7 +54,7 @@ export const actions: Actions = {
 
       return { success: true };
     } catch {
-      return redirect(303, "/");
+      return fail(400, { error: "Server error" });
     }
   },
 
