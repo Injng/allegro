@@ -33,6 +33,26 @@ pub struct Performer {
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::composers)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct Composer {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}
+
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
+#[diesel(table_name = crate::schema::songwriters)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct Songwriter {
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}
+
+#[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::releases)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Release {
