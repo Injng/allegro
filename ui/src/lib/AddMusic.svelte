@@ -258,21 +258,117 @@
                         <Label for="composer" class="text-right text-slate-400"
                             >Composer*</Label
                         >
-                        <Input
-                            id="composer"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={() => {
+                                    searchArtists("composer");
+                                }}
+                            >
+                                {selectedArtistName ||
+                                    "Search for a composer..."}
+                            </Button>
+                            <input
+                                type="hidden"
+                                name="composer"
+                                value={selectedArtistId}
+                            />
+                            <Command.Dialog
+                                bind:open
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search artists..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={artistSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingArtists}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each artists as artist (artist.id)}
+                                                <Command.Item
+                                                    value={artist.name}
+                                                    onSelect={() =>
+                                                        handleArtistSelect(
+                                                            artist,
+                                                        )}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {artist.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="writer" class="text-right text-slate-400"
-                            >Songwriter</Label
+                        <Label
+                            for="songwriter"
+                            class="text-right text-slate-400">Songwriter</Label
                         >
-                        <Input
-                            id="writer"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={() => {
+                                    searchArtists("songwriter");
+                                }}
+                            >
+                                {selectedArtistName ||
+                                    "Search for a songwriter..."}
+                            </Button>
+                            <input
+                                type="hidden"
+                                name="songwriter"
+                                value={selectedArtistId}
+                            />
+                            <Command.Dialog
+                                bind:open
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search artists..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={artistSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingArtists}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each artists as artist (artist.id)}
+                                                <Command.Item
+                                                    value={artist.name}
+                                                    onSelect={() =>
+                                                        handleArtistSelect(
+                                                            artist,
+                                                        )}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {artist.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
@@ -330,7 +426,7 @@
                                     }}
                                 >
                                     {selectedArtistName ||
-                                        "Search for an artist..."}
+                                        "Search for a performer..."}
                                 </Button>
                                 <input
                                     type="hidden"
