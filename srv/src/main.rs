@@ -19,6 +19,12 @@ pub struct Response<T> {
     pub message: T,
 }
 
+/// A generic id request from a user
+#[derive(Deserialize, Serialize)]
+pub struct IdRequest {
+    pub id: i32,
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     // establish environment variables and enable logging
@@ -49,8 +55,15 @@ async fn main() -> io::Result<()> {
             .service(api::addmusic::addartist)
             .service(api::addmusic::addpiece)
             .service(api::addmusic::addrelease)
+            .service(api::get::getcomposer)
             .service(api::get::getcomposers)
+            .service(api::get::getperformer)
             .service(api::get::getperformers)
+            .service(api::get::getpiece)
+            .service(api::get::getpieces)
+            .service(api::get::getrelease)
+            .service(api::get::getreleases)
+            .service(api::get::getsongwriter)
             .service(api::get::getsongwriters)
             .service(api::search::searchperformer)
     })

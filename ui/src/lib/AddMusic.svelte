@@ -11,7 +11,7 @@
     import { enhance } from "$app/forms";
     import type { ActionResult } from "@sveltejs/kit";
     import { fade } from "svelte/transition";
-    import type { Artist } from "./types";
+    import type { Artist, Piece, Release } from "./types";
     import axios from "axios";
 
     // ensure files are less than 300 MB
@@ -57,6 +57,8 @@
     let composerDialogOpen = false;
     let songwriterDialogOpen = false;
     let performerDialogOpen = false;
+    let pieceDialogOpen = false;
+    let releaseDialogOpen = false;
 
     // handle search dialog select
     let selectedPerformerName = "";
@@ -84,16 +86,138 @@
         }
     }
 
+    // handle piece select
+    let selectedPieceName = "";
+    let selectedPieceId: number = 0;
+    function handlePieceSelect(piece: Piece) {
+        selectedPieceName = piece.name;
+        selectedPieceId = piece.id;
+        pieceDialogOpen = false;
+    }
+
+    // handle release select
+    let selectedReleaseName = "";
+    let selectedReleaseId: number = 0;
+    function handleReleaseSelect(release: Release) {
+        selectedReleaseName = release.name;
+        selectedReleaseId = release.id;
+        releaseDialogOpen = false;
+    }
+
     // set axios api
     const api = axios.create({
         baseURL: "http://localhost:9000",
     });
 
+    // search for pieces
+    let pieceSearch = "";
+    let loadingPieces = true;
+    let pieces: Piece[] = [];
+    async function getPieces() {
+        pieces = [];
+        loadingPieces = true;
+        pieceDialogOpen = true;
+        try {
+            const response = await api.get("/music/get/pieces");
+            for (let p of response.data.message) {
+                // get the composer
+                const composerResponse = await api.post("/music/get/composer", {
+                    id: p.composer_id,
+                });
+                const composerData = composerResponse.data.message;
+                let composer: Artist = {
+                    id: composerData.id,
+                    name: composerData.name,
+                    description: composerData.description,
+                    artist_type: "composer",
+                    image_path: composerData.image_path,
+                };
+
+                // get the songwriter
+                const songwriterResponse = await api.post(
+                    "/music/get/songwriter",
+                    {
+                        id: p.songwriter_id,
+                    },
+                );
+                const songwriterData = songwriterResponse.data.message;
+                let songwriter: Artist = {
+                    id: songwriterData.id,
+                    name: songwriterData.name,
+                    description: songwriterData.description,
+                    artist_type: "songwriter",
+                    image_path: songwriterData.image_path,
+                };
+
+                // construct the piece
+                let piece: Piece = {
+                    id: p.id,
+                    name: p.name,
+                    movements: p.movements,
+                    composer: composer,
+                    songwriter: songwriter,
+                    description: p.description,
+                };
+                pieces.push(piece);
+            }
+        } catch (error) {
+            console.error("Error fetching pieces:", error);
+            pieces = [];
+        } finally {
+            loadingPieces = false;
+        }
+    }
+
+    // search for releases
+    let releaseSearch = "";
+    let loadingReleases = true;
+    let releases: Release[] = [];
+    async function getReleases() {
+        releases = [];
+        loadingReleases = true;
+        releaseDialogOpen = true;
+        try {
+            const response = await api.get("/music/get/releases");
+            for (let r of response.data.message) {
+                // get the performer
+                const performerResponse = await api.post(
+                    "/music/get/performer",
+                    {
+                        id: r.performer_id,
+                    },
+                );
+                const data = performerResponse.data.message;
+                let performer: Artist = {
+                    id: data.id,
+                    name: data.name,
+                    description: data.description,
+                    artist_type: "performer",
+                    image_path: data.image_path,
+                };
+
+                // construct the release
+                let release: Release = {
+                    id: r.id,
+                    name: r.name,
+                    performer: performer,
+                    description: r.description,
+                    image_path: r.image_path,
+                };
+                releases.push(release);
+            }
+        } catch (error) {
+            console.error("Error fetching releases:", error);
+            releases = [];
+        } finally {
+            loadingReleases = false;
+        }
+    }
+
     // search for artists
     let artistSearch = "";
     let loadingArtists = true;
     let artists: Artist[] = [];
-    async function searchArtists(
+    async function getArtists(
         artist_type: "performer" | "composer" | "songwriter",
     ) {
         // set the correct dialog state
@@ -200,33 +324,176 @@
                         <Label for="piece" class="text-right text-slate-400"
                             >Piece*</Label
                         >
-                        <Input
-                            id="piece"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={() => {
+                                    getPieces();
+                                }}
+                            >
+                                {selectedPieceName || "Search for a piece..."}
+                            </Button>
+                            <input
+                                type="hidden"
+                                name="piece"
+                                value={selectedPieceId}
+                            />
+                            <Command.Dialog
+                                bind:open={pieceDialogOpen}
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search pieces..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={pieceSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingPieces}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each pieces as piece (piece.id)}
+                                                <Command.Item
+                                                    value={piece.name}
+                                                    onSelect={() => {
+                                                        handlePieceSelect(
+                                                            piece,
+                                                        );
+                                                    }}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {piece.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
                         <Label for="release" class="text-right text-slate-400"
                             >Release*</Label
                         >
-                        <Input
-                            id="release"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={() => {
+                                    getReleases();
+                                }}
+                            >
+                                {selectedReleaseName ||
+                                    "Search for a release..."}
+                            </Button>
+                            <input
+                                type="hidden"
+                                name="release"
+                                value={selectedReleaseId}
+                            />
+                            <Command.Dialog
+                                bind:open={releaseDialogOpen}
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search pieces..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={releaseSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingReleases}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each releases as release (release.id)}
+                                                <Command.Item
+                                                    value={release.name}
+                                                    onSelect={() => {
+                                                        handleReleaseSelect(
+                                                            release,
+                                                        );
+                                                    }}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {release.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="artist" class="text-right text-slate-400"
-                            >Artist*</Label
+                        <Label for="performer" class="text-right text-slate-400"
+                            >Performer*</Label
                         >
-                        <Input
-                            id="artist"
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
-                            required
-                        />
+                        <div class="col-span-3">
+                            <Button
+                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                on:click={() => {
+                                    getArtists("performer");
+                                }}
+                            >
+                                {selectedPerformerName ||
+                                    "Search for a performer..."}
+                            </Button>
+                            <input
+                                type="hidden"
+                                name="performer"
+                                value={selectedPerformerId}
+                            />
+                            <Command.Dialog
+                                bind:open={performerDialogOpen}
+                                class="bg-slate-900 border border-slate-700"
+                            >
+                                <Command.Input
+                                    placeholder="Search artists..."
+                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                    bind:value={artistSearch}
+                                />
+                                <Command.List
+                                    class="bg-slate-900 text-slate-50"
+                                >
+                                    {#if loadingArtists}
+                                        <Command.Empty
+                                            class="py-6 text-center text-sm text-slate-400"
+                                        >
+                                            Loading...
+                                        </Command.Empty>
+                                    {:else}
+                                        <Command.Group class="p-1">
+                                            {#each artists as artist (artist.id)}
+                                                <Command.Item
+                                                    value={artist.name}
+                                                    onSelect={() =>
+                                                        handleArtistSelect(
+                                                            artist,
+                                                            "performer",
+                                                        )}
+                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                >
+                                                    {artist.name}
+                                                </Command.Item>
+                                            {/each}
+                                        </Command.Group>
+                                    {/if}
+                                </Command.List>
+                            </Command.Dialog>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-4 items-center gap-4">
@@ -298,7 +565,7 @@
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
-                                        searchArtists("composer");
+                                        getArtists("composer");
                                     }}
                                 >
                                     {selectedComposerName ||
@@ -359,7 +626,7 @@
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
-                                        searchArtists("songwriter");
+                                        getArtists("songwriter");
                                     }}
                                 >
                                     {selectedSongwriterName ||
@@ -464,7 +731,7 @@
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
-                                        searchArtists("performer");
+                                        getArtists("performer");
                                     }}
                                 >
                                     {selectedPerformerName ||

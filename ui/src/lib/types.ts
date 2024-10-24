@@ -1,8 +1,18 @@
 export type Release = {
+  id: number;
   name: string;
-  artist: string;
-  cover: string;
-  type: "album" | "single";
+  performer: Artist;
+  description: string | null;
+  image_path: string | null;
+};
+
+export type Piece = {
+  id: number;
+  name: string;
+  movements: number | null;
+  composer: Artist;
+  songwriter: Artist | null;
+  description: string | null;
 };
 
 export type Artist = {
