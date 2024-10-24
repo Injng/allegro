@@ -12,7 +12,7 @@ export const actions: Actions = {
     // get form data
     const data = await request.formData();
     const name = data.get("name");
-    const artist = data.get("artist");
+    const performer = data.get("performer");
     const description = data.get("description");
     const image = data.get("file") as File;
     const token = cookies.get("token");
@@ -23,22 +23,20 @@ export const actions: Actions = {
     }
 
     // ensure artist is not empty
-    const artist_id = Number(artist);
-    if (isNaN(artist_id) || artist_id <= 0) {
-      return fail(400, { error: "Artist cannot be empty" });
+    const performer_id = Number(performer);
+    if (isNaN(performer_id) || performer_id <= 0) {
+      return fail(400, { error: "Performer cannot be empty" });
     }
 
     try {
       const has_image = image.size > 0;
       const response = await api.post("/music/add/release", {
         name,
-        artist_id,
+        performer_id,
         description,
         has_image,
         token,
       });
-
-      console.log(response.data);
 
       if (!response.data.success) {
         return fail(400, response.data.message);
@@ -86,8 +84,6 @@ export const actions: Actions = {
         artist_type,
         token,
       });
-
-      console.log(response.data);
 
       if (!response.data.success) {
         return fail(400, response.data.message);

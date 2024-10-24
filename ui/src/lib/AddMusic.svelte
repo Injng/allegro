@@ -318,7 +318,7 @@
 
                         <div class="grid grid-cols-4 items-center gap-4">
                             <Label
-                                for="artist"
+                                for="performer"
                                 class="text-right text-slate-400"
                                 >Performer*</Label
                             >
@@ -334,7 +334,7 @@
                                 </Button>
                                 <input
                                     type="hidden"
-                                    name="artist"
+                                    name="performer"
                                     value={selectedArtistId}
                                 />
                                 <Command.Dialog
