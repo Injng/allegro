@@ -23,9 +23,9 @@ pub struct Admin {
 }
 
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
-#[diesel(table_name = crate::schema::artists)]
+#[diesel(table_name = crate::schema::performers)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct Artist {
+pub struct Performer {
     pub id: i32,
     pub name: String,
     pub description: Option<String>,
@@ -38,7 +38,7 @@ pub struct Artist {
 pub struct Release {
     pub id: i32,
     pub name: String,
-    pub artist_id: i32,
+    pub performer_id: i32,
     pub description: Option<String>,
     pub image_path: Option<String>,
 }

@@ -1,4 +1,4 @@
-use crate::models::{Admin, Artist, User};
+use crate::models::{Admin, Performer, User};
 
 use actix_web::web::{Data, Json};
 use actix_web::{post, web, HttpResponse};
@@ -53,12 +53,12 @@ fn check_admin(
     return true;
 }
 
-/// Search an artist in the artists index, and return a list of relevant artists
-fn db_searchartist<T>(
+/// Search a performer in the performers index, and return a list of relevant performers
+fn db_searchperformer<T>(
     search_req: SearchRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-) -> Response<Vec<Artist>> {
-    use crate::schema::artists;
+) -> Response<Vec<Performer>> {
+    use crate::schema::performers;
 
     // check for admin privileges
     let is_admin: bool = check_admin(search_req.token, conn);
@@ -69,13 +69,13 @@ fn db_searchartist<T>(
         };
     }
 
-    // search for the artist in the database
+    // search for the performer in the database
     let search_query = format!("%{}%", search_req.query);
-    let artist_res = artists::dsl::artists
-        .filter(artists::dsl::name.ilike(search_query))
-        .load::<Artist>(conn);
-    let artist: Vec<Artist> = match artist_res {
-        Ok(_) => artist_res.unwrap(),
+    let performer_res = performers::dsl::performers
+        .filter(performers::dsl::name.ilike(search_query))
+        .load::<Performer>(conn);
+    let performer: Vec<Performer> = match performer_res {
+        Ok(_) => performer_res.unwrap(),
         Err(_) => {
             return Response {
                 success: false,
@@ -86,21 +86,22 @@ fn db_searchartist<T>(
 
     Response {
         success: true,
-        message: artist,
+        message: performer,
     }
 }
 
 /// Search for an artist
-#[post("/music/search/artist")]
-pub async fn searchartist(
+#[post("/music/search/performer")]
+pub async fn searchperformer(
     search_req: Json<SearchRequest>,
     pool: Data<Pool<ConnectionManager<PgConnection>>>,
 ) -> HttpResponse {
-    // get the searchartist response from database
+    // get the searchperformer response from database
     let mut conn = pool.get().expect("Connection pool error");
-    let searchartist_response =
-        web::block(move || db_searchartist::<Vec<Artist>>(search_req.into_inner(), &mut conn))
-            .await;
+    let searchartist_response = web::block(move || {
+        db_searchperformer::<Vec<Performer>>(search_req.into_inner(), &mut conn)
+    })
+    .await;
 
     // return the appropriate response and handle errors
     match searchartist_response {

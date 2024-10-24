@@ -19,10 +19,28 @@ pub struct NewAdmin {
     pub username: String,
 }
 
-/// Represents a new artist to insert into the artists table
+/// Represents a new composer to insert into the composers table
 #[derive(Insertable)]
-#[diesel(table_name = crate::schema::artists)]
-pub struct NewArtist {
+#[diesel(table_name = crate::schema::composers)]
+pub struct NewComposer {
+    pub name: String,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}
+
+/// Represents a new performer to insert into the performers table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::performers)]
+pub struct NewPerformer {
+    pub name: String,
+    pub description: Option<String>,
+    pub image_path: Option<String>,
+}
+
+/// Represents a new songwriter to insert into the songwriters table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::songwriters)]
+pub struct NewSongwriter {
     pub name: String,
     pub description: Option<String>,
     pub image_path: Option<String>,
@@ -33,7 +51,7 @@ pub struct NewArtist {
 #[diesel(table_name = crate::schema::releases)]
 pub struct NewRelease {
     pub name: String,
-    pub artist_id: i32,
+    pub performer_id: i32,
     pub description: Option<String>,
     pub image_path: Option<String>,
 }

@@ -1,27 +1,20 @@
-use crate::models::Artist;
+use crate::models::Performer;
+use crate::Response;
 
 use actix_web::web::Data;
 use actix_web::{get, web, HttpResponse};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
-use serde::{Deserialize, Serialize};
 
-/// Generic response to denote whether operation was successful
-#[derive(Deserialize, Serialize)]
-pub struct Response<T> {
-    pub success: bool,
-    pub message: T,
-}
-
-/// Get all artists in the artists index
-fn db_getartists<T>(
+/// Get all performers in the performers index
+fn db_getperformers<T>(
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
-) -> Response<Vec<Artist>> {
-    use crate::schema::artists;
+) -> Response<Vec<Performer>> {
+    use crate::schema::performers;
 
     // get all artists from the database
-    let artist_res = artists::dsl::artists.load::<Artist>(conn);
-    let artist: Vec<Artist> = match artist_res {
+    let artist_res = performers::dsl::performers.load::<Performer>(conn);
+    let artist: Vec<Performer> = match artist_res {
         Ok(_) => artist_res.unwrap(),
         Err(_) => {
             return Response {
@@ -37,15 +30,16 @@ fn db_getartists<T>(
     }
 }
 
-/// Get all artists
-#[get("/music/get/artists")]
-pub async fn getartists(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> HttpResponse {
-    // get the getartists response from database
+/// Get all performers
+#[get("/music/get/performers")]
+pub async fn getperformers(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> HttpResponse {
+    // get the getperformers response from database
     let mut conn = pool.get().expect("Connection pool error");
-    let getartists_response = web::block(move || db_getartists::<Vec<Artist>>(&mut conn)).await;
+    let getperformers_response =
+        web::block(move || db_getperformers::<Vec<Performer>>(&mut conn)).await;
 
     // return the appropriate response and handle errors
-    match getartists_response {
+    match getperformers_response {
         Ok(response) => {
             // handle case where server successfuly processes the request
             HttpResponse::Created()

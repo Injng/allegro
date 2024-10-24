@@ -4,12 +4,20 @@ use actix_web::{middleware, App, HttpServer};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool};
 use dotenvy::dotenv;
+use serde::{Deserialize, Serialize};
 use std::{env, io};
 
 pub mod api;
 pub mod insert;
 pub mod models;
 pub mod schema;
+
+/// Generic response to denote whether operation was successful
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Response<T> {
+    pub success: bool,
+    pub message: T,
+}
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -40,8 +48,8 @@ async fn main() -> io::Result<()> {
             .service(api::auth::login)
             .service(api::addmusic::addartist)
             .service(api::addmusic::addrelease)
-            .service(api::get::getartists)
-            .service(api::search::searchartist)
+            .service(api::get::getperformers)
+            .service(api::search::searchperformer)
     })
     .bind("0.0.0.0:9000")?
     .run()

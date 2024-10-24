@@ -1,5 +1,6 @@
 use crate::insert;
 use crate::models::{Admin, User};
+use crate::Response;
 
 use actix_web::web::{Data, Json};
 use actix_web::{get, post, web, HttpResponse};
@@ -16,13 +17,6 @@ use uuid::Uuid;
 static PBKDF2_ALG: pbkdf2::Algorithm = pbkdf2::PBKDF2_HMAC_SHA256;
 const PBKDF2_ITER: u32 = 100_000;
 const HASH_LEN: usize = digest::SHA256_OUTPUT_LEN;
-
-/// Generic response to denote whether operation was successful
-#[derive(Deserialize, Serialize)]
-pub struct Response<T> {
-    pub success: bool,
-    pub message: T,
-}
 
 /// Return whether access is granted and a session token to an authorization request.
 #[derive(Debug, Deserialize, Serialize)]

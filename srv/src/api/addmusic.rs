@@ -1,5 +1,6 @@
 use crate::insert;
 use crate::models::{Admin, User};
+use crate::Response;
 
 use actix_web::web::{Data, Json};
 use actix_web::{post, web, HttpResponse};
@@ -7,19 +8,13 @@ use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use serde::{Deserialize, Serialize};
 
-/// Generic response to denote whether operation was successful
-#[derive(Debug, Deserialize, Serialize)]
-pub struct Response<T> {
-    pub success: bool,
-    pub message: T,
-}
-
-/// A request to add an artist
+/// A request to add an artist, with type either performer, composer, or songwriter
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddArtistRequest {
     pub name: String,
     pub description: Option<String>,
     pub has_image: bool,
+    pub artist_type: String,
     pub token: String,
 }
 
@@ -27,7 +22,7 @@ pub struct AddArtistRequest {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddReleaseRequest {
     pub name: String,
-    pub artist_id: i32,
+    pub performer_id: i32,
     pub description: Option<String>,
     pub has_image: bool,
     pub token: String,
@@ -85,7 +80,7 @@ fn db_addrelease<T>(
     // insert the new release into the database
     let new_release = insert::NewRelease {
         name: addrelease_req.name,
-        artist_id: addrelease_req.artist_id,
+        performer_id: addrelease_req.performer_id,
         description: addrelease_req.description,
         image_path: None,
     };
@@ -110,15 +105,114 @@ fn db_addrelease<T>(
     }
 }
 
+/// Add a performer to the database, and return the image path of the performer if it exists
+fn db_addperformer(
+    addartist_req: AddArtistRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<String> {
+    use crate::schema::performers;
+
+    // insert the new performer into the database
+    let new_performer = insert::NewPerformer {
+        name: addartist_req.name,
+        description: addartist_req.description,
+        image_path: None,
+    };
+    let performer_id: i32 = diesel::insert_into(performers::dsl::performers)
+        .values(&new_performer)
+        .returning(performers::dsl::id)
+        .get_result(conn)
+        .unwrap();
+
+    // actual image path is performer-[performer id]
+    let mut new_image_path = String::new();
+    if addartist_req.has_image {
+        new_image_path = format!("performer-{}", performer_id);
+        diesel::update(performers::dsl::performers.find(performer_id))
+            .set(performers::dsl::image_path.eq(new_image_path.clone()))
+            .execute(conn)
+            .unwrap();
+    }
+    Response {
+        success: true,
+        message: new_image_path,
+    }
+}
+/// Add a composer to the database, and return the image path of the composer if it exists
+fn db_addcomposer(
+    addartist_req: AddArtistRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<String> {
+    use crate::schema::composers;
+
+    // insert the new composer into the database
+    let new_composer = insert::NewComposer {
+        name: addartist_req.name,
+        description: addartist_req.description,
+        image_path: None,
+    };
+    let composer_id: i32 = diesel::insert_into(composers::dsl::composers)
+        .values(&new_composer)
+        .returning(composers::dsl::id)
+        .get_result::<i32>(conn)
+        .unwrap();
+
+    // actual image path is composer-[composer id]
+    let mut new_image_path = String::new();
+    if addartist_req.has_image {
+        new_image_path = format!("composer-{}", composer_id);
+        diesel::update(composers::dsl::composers.find(composer_id))
+            .set(composers::dsl::image_path.eq(new_image_path.clone()))
+            .execute(conn)
+            .unwrap();
+    }
+    Response {
+        success: true,
+        message: new_image_path,
+    }
+}
+
+/// Add a songwriter to the database, and return the image path of the songwriter if it exists
+fn db_addsongwriter(
+    addartist_req: AddArtistRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<String> {
+    use crate::schema::songwriters;
+
+    // insert the new songwriter into the database
+    let new_songwriter = insert::NewSongwriter {
+        name: addartist_req.name,
+        description: addartist_req.description,
+        image_path: None,
+    };
+    let songwriter_id: i32 = diesel::insert_into(songwriters::dsl::songwriters)
+        .values(&new_songwriter)
+        .returning(songwriters::dsl::id)
+        .get_result::<i32>(conn)
+        .unwrap();
+
+    // actual image path is songwriter-[songwriter id]
+    let mut new_image_path = String::new();
+    if addartist_req.has_image {
+        new_image_path = format!("songwriter-{}", songwriter_id);
+        diesel::update(songwriters::dsl::songwriters.find(songwriter_id))
+            .set(songwriters::dsl::image_path.eq(new_image_path.clone()))
+            .execute(conn)
+            .unwrap();
+    }
+    Response {
+        success: true,
+        message: new_image_path,
+    }
+}
+
 /// Add an artist to the database, and return the image path of the artist if it exists
 fn db_addartist<T>(
     addartist_req: AddArtistRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Response<String> {
-    use crate::schema::artists;
-
     // check for admin privileges
-    let is_admin: bool = check_admin(addartist_req.token, conn);
+    let is_admin: bool = check_admin(addartist_req.token.clone(), conn);
     if !is_admin {
         return Response {
             success: false,
@@ -126,30 +220,18 @@ fn db_addartist<T>(
         };
     }
 
-    // insert the new artist into the database
-    let new_artist = insert::NewArtist {
-        name: addartist_req.name,
-        description: addartist_req.description,
-        image_path: None,
-    };
-    let artist_id: i32 = diesel::insert_into(artists::dsl::artists)
-        .values(&new_artist)
-        .returning(artists::dsl::id)
-        .get_result(conn)
-        .unwrap();
-
-    // actual image path is artist-[artist id]
-    let mut new_image_path = String::new();
-    if addartist_req.has_image {
-        new_image_path = format!("artist-{}", artist_id);
-        diesel::update(artists::dsl::artists.find(artist_id))
-            .set(artists::dsl::image_path.eq(new_image_path.clone()))
-            .execute(conn)
-            .unwrap();
-    }
-    Response {
-        success: true,
-        message: new_image_path,
+    // determine the type of artist to add
+    if addartist_req.artist_type == "performer" {
+        return db_addperformer(addartist_req, conn);
+    } else if addartist_req.artist_type == "composer" {
+        return db_addcomposer(addartist_req, conn);
+    } else if addartist_req.artist_type == "songwriter" {
+        return db_addsongwriter(addartist_req, conn);
+    } else {
+        return Response {
+            success: false,
+            message: "Invalid artist type".to_string(),
+        };
     }
 }
 

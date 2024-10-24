@@ -75,20 +75,23 @@
     let artistSearch = "";
     let loadingArtists = true;
     let artists: Artist[] = [];
-    async function searchArtists() {
+    async function searchArtists(
+        artist_type: "performer" | "composer" | "songwriter",
+    ) {
         open = true;
         if (!loadingArtists) {
             return;
         }
         loadingArtists = true;
         try {
-            const response = await api.get("/music/get/artists");
+            const response = await api.get(`/music/get/${artist_type}s`);
             console.log(response.data);
             for (let a of response.data.message) {
                 let artist: Artist = {
                     id: a.id,
                     name: a.name,
                     description: a.description,
+                    artist_type: artist_type,
                     image_path: a.image_path,
                 };
                 artists.push(artist);
@@ -316,12 +319,15 @@
                         <div class="grid grid-cols-4 items-center gap-4">
                             <Label
                                 for="artist"
-                                class="text-right text-slate-400">Artist*</Label
+                                class="text-right text-slate-400"
+                                >Performer*</Label
                             >
                             <div class="col-span-3">
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                                    on:click={searchArtists}
+                                    on:click={() => {
+                                        searchArtists("performer");
+                                    }}
                                 >
                                     {selectedArtistName ||
                                         "Search for an artist..."}
@@ -426,6 +432,23 @@
                                 class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
                                 required
                             />
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="type" class="text-right text-slate-400"
+                                >Artist Type*</Label
+                            >
+                            <select
+                                id="type"
+                                name="type"
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 rounded-md px-3 py-2"
+                                required
+                            >
+                                <option value="">Select type...</option>
+                                <option value="performer">Performer</option>
+                                <option value="composer">Composer</option>
+                                <option value="songwriter">Songwriter</option>
+                            </select>
                         </div>
 
                         <div class="grid grid-cols-4 items-center gap-4">

@@ -64,12 +64,17 @@ export const actions: Actions = {
     const name = data.get("name");
     const description = data.get("description");
     const image = data.get("file") as File;
+    const artist_type = data.get("type");
     const token = cookies.get("token");
 
     // ensure name is not empty
     if (name === "" || name === null) {
-      console.log("error reached");
       return fail(400, { error: "Name cannot be empty" });
+    }
+
+    // ensure type is not empty
+    if (artist_type === "" || artist_type === null) {
+      return fail(400, { error: "Type cannot be empty" });
     }
 
     try {
@@ -78,6 +83,7 @@ export const actions: Actions = {
         name,
         description,
         has_image,
+        artist_type,
         token,
       });
 
