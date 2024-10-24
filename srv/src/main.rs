@@ -47,6 +47,7 @@ async fn main() -> io::Result<()> {
             .service(api::auth::countuser)
             .service(api::auth::login)
             .service(api::addmusic::addartist)
+            .service(api::addmusic::addpiece)
             .service(api::addmusic::addrelease)
             .service(api::get::getcomposers)
             .service(api::get::getperformers)

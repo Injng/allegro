@@ -8,6 +8,58 @@ const api = axios.create({
 });
 
 export const actions: Actions = {
+  addpiece: async ({ request, cookies }) => {
+    // get form data
+    const data = await request.formData();
+    const name = data.get("name");
+    let movements: number | null = Number(data.get("movements"));
+    const composer = data.get("composer");
+    const songwriter = data.get("songwriter");
+    const description = data.get("description");
+    const token = cookies.get("token");
+
+    // ensure name is not empty
+    if (name === "" || name === null) {
+      return fail(400, { error: "Name cannot be empty" });
+    }
+
+    // ensure artist is not empty
+    const composer_id = Number(composer);
+    if (isNaN(composer_id) || composer_id <= 0) {
+      return fail(400, { error: "Composer cannot be empty" });
+    }
+
+    // make songwrtier optional
+    let songwriter_id: number | null = Number(songwriter);
+    if (isNaN(songwriter_id) || songwriter_id <= 0) {
+      songwriter_id = null;
+    }
+
+    // make movements optional
+    if (isNaN(movements) || movements <= 1) {
+      movements = null;
+    }
+
+    try {
+      const response = await api.post("/music/add/piece", {
+        name,
+        movements,
+        composer_id,
+        songwriter_id,
+        description,
+        token,
+      });
+
+      if (!response.data.success) {
+        return fail(400, response.data.message);
+      }
+
+      return { success: true };
+    } catch {
+      return fail(400, { error: "Server error" });
+    }
+  },
+
   addrelease: async ({ request, cookies }) => {
     // get form data
     const data = await request.formData();
