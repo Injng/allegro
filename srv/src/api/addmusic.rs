@@ -28,6 +28,17 @@ pub struct AddReleaseRequest {
     pub token: String,
 }
 
+/// A request to add a piece
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AddPieceRequest {
+    pub name: String,
+    pub movements: Option<i32>,
+    pub composer_id: i32,
+    pub songwriter_id: Option<i32>,
+    pub description: Option<String>,
+    pub token: String,
+}
+
 /// Given a token, return whether the user is an admin
 fn check_admin(
     token: String,
@@ -59,6 +70,40 @@ fn check_admin(
     };
 
     return true;
+}
+
+/// Add a piece to the database
+fn db_addpiece<T>(
+    addpiece_req: AddPieceRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<String> {
+    use crate::schema::pieces;
+
+    // check for admin privileges
+    let is_admin: bool = check_admin(addpiece_req.token, conn);
+    if !is_admin {
+        return Response {
+            success: false,
+            message: "User is not an admin".to_string(),
+        };
+    }
+
+    // insert the new piece into the database
+    let new_piece = insert::NewPiece {
+        name: addpiece_req.name,
+        movements: addpiece_req.movements,
+        composer_id: addpiece_req.composer_id,
+        songwriter_id: addpiece_req.songwriter_id,
+        description: addpiece_req.description,
+    };
+    let _ = diesel::insert_into(pieces::dsl::pieces)
+        .values(&new_piece)
+        .execute(conn);
+
+    Response {
+        success: true,
+        message: String::new(),
+    }
 }
 
 /// Add a release to the database, and return the image path of the release if it exists
@@ -232,6 +277,32 @@ fn db_addartist<T>(
             success: false,
             message: "Invalid artist type".to_string(),
         };
+    }
+}
+
+/// Add a piece to the database
+#[post("/music/add/piece")]
+pub async fn addpiece(
+    addpiece_req: Json<AddPieceRequest>,
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+) -> HttpResponse {
+    // get the addpiece response from database
+    let mut conn = pool.get().expect("Connection pool error");
+    let addpiece_response =
+        web::block(move || db_addpiece::<String>(addpiece_req.into_inner(), &mut conn)).await;
+
+    // return the appropriate response and handle errors
+    match addpiece_response {
+        Ok(response) => {
+            // handle case where server successfuly processes the request
+            HttpResponse::Created()
+                .content_type("application/json")
+                .json(response)
+        }
+        _ => {
+            // handle case where server error occurs
+            HttpResponse::InternalServerError().finish()
+        }
     }
 }
 

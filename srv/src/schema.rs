@@ -27,6 +27,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    pieces (id) {
+        id -> Int4,
+        name -> Varchar,
+        movements -> Nullable<Int4>,
+        composer_id -> Int4,
+        songwriter_id -> Nullable<Int4>,
+        description -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
     releases (id) {
         id -> Int4,
         name -> Varchar,
@@ -60,12 +71,15 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(pieces -> composers (composer_id));
+diesel::joinable!(pieces -> songwriters (songwriter_id));
 diesel::joinable!(releases -> performers (performer_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     admin,
     composers,
     performers,
+    pieces,
     releases,
     songwriters,
     users,

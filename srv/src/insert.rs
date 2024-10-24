@@ -55,3 +55,14 @@ pub struct NewRelease {
     pub description: Option<String>,
     pub image_path: Option<String>,
 }
+
+/// Represents a new piece to insert into the pieces table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::pieces)]
+pub struct NewPiece {
+    pub name: String,
+    pub movements: Option<i32>,
+    pub composer_id: i32,
+    pub songwriter_id: Option<i32>,
+    pub description: Option<String>,
+}
