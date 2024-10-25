@@ -51,7 +51,6 @@ pub struct NewSongwriter {
 #[diesel(table_name = crate::schema::releases)]
 pub struct NewRelease {
     pub name: String,
-    pub performer_id: i32,
     pub description: Option<String>,
     pub image_path: Option<String>,
 }
@@ -62,7 +61,5 @@ pub struct NewRelease {
 pub struct NewPiece {
     pub name: String,
     pub movements: Option<i32>,
-    pub composer_id: i32,
-    pub songwriter_id: Option<i32>,
     pub description: Option<String>,
 }

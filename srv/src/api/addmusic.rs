@@ -22,7 +22,7 @@ pub struct AddArtistRequest {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct AddReleaseRequest {
     pub name: String,
-    pub performer_id: i32,
+    pub performer_ids: Vec<i32>,
     pub description: Option<String>,
     pub has_image: bool,
     pub token: String,
@@ -33,9 +33,19 @@ pub struct AddReleaseRequest {
 pub struct AddPieceRequest {
     pub name: String,
     pub movements: Option<i32>,
-    pub composer_id: i32,
-    pub songwriter_id: Option<i32>,
+    pub composer_ids: Vec<i32>,
+    pub songwriter_ids: Option<Vec<i32>>,
     pub description: Option<String>,
+    pub token: String,
+}
+
+/// A request to add a recording
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct AddRecordingRequest {
+    pub piece_id: i32,
+    pub release_id: i32,
+    pub performer_ids: Vec<i32>,
+    pub file_path: String,
     pub token: String,
 }
 
@@ -77,7 +87,7 @@ fn db_addpiece<T>(
     addpiece_req: AddPieceRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Response<String> {
-    use crate::schema::pieces;
+    use crate::schema::{piece_composers, piece_songwriters, pieces};
 
     // check for admin privileges
     let is_admin: bool = check_admin(addpiece_req.token, conn);
@@ -92,13 +102,37 @@ fn db_addpiece<T>(
     let new_piece = insert::NewPiece {
         name: addpiece_req.name,
         movements: addpiece_req.movements,
-        composer_id: addpiece_req.composer_id,
-        songwriter_id: addpiece_req.songwriter_id,
         description: addpiece_req.description,
     };
-    let _ = diesel::insert_into(pieces::dsl::pieces)
+
+    // insert piece and get its ID
+    let piece_id: i32 = diesel::insert_into(pieces::dsl::pieces)
         .values(&new_piece)
-        .execute(conn);
+        .returning(pieces::dsl::id)
+        .get_result(conn)
+        .unwrap();
+
+    // insert composer relationships
+    for composer_id in addpiece_req.composer_ids {
+        let _ = diesel::insert_into(piece_composers::table)
+            .values((
+                piece_composers::piece_id.eq(piece_id),
+                piece_composers::composer_id.eq(composer_id),
+            ))
+            .execute(conn);
+    }
+
+    // insert songwriter relationships if they exist
+    if let Some(songwriter_ids) = addpiece_req.songwriter_ids {
+        for songwriter_id in songwriter_ids {
+            let _ = diesel::insert_into(piece_songwriters::table)
+                .values((
+                    piece_songwriters::piece_id.eq(piece_id),
+                    piece_songwriters::songwriter_id.eq(songwriter_id),
+                ))
+                .execute(conn);
+        }
+    }
 
     Response {
         success: true,
@@ -106,12 +140,12 @@ fn db_addpiece<T>(
     }
 }
 
-/// Add a release to the database, and return the image path of the release if it exists
+/// Add a release to the database
 fn db_addrelease<T>(
     addrelease_req: AddReleaseRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Response<String> {
-    use crate::schema::releases;
+    use crate::schema::{release_performers, releases};
 
     // check for admin privileges
     let is_admin: bool = check_admin(addrelease_req.token, conn);
@@ -125,17 +159,28 @@ fn db_addrelease<T>(
     // insert the new release into the database
     let new_release = insert::NewRelease {
         name: addrelease_req.name,
-        performer_id: addrelease_req.performer_id,
         description: addrelease_req.description,
         image_path: None,
     };
+
+    // insert release and get its ID
     let release_id: i32 = diesel::insert_into(releases::dsl::releases)
         .values(&new_release)
         .returning(releases::dsl::id)
         .get_result(conn)
         .unwrap();
 
-    // actual image path is release-[release id]
+    // insert performer relationships
+    for performer_id in addrelease_req.performer_ids {
+        let _ = diesel::insert_into(release_performers::table)
+            .values((
+                release_performers::release_id.eq(release_id),
+                release_performers::performer_id.eq(performer_id),
+            ))
+            .execute(conn);
+    }
+
+    // handle image path
     let mut new_image_path = String::new();
     if addrelease_req.has_image {
         new_image_path = format!("release-{}", release_id);
@@ -144,6 +189,7 @@ fn db_addrelease<T>(
             .execute(conn)
             .unwrap();
     }
+
     Response {
         success: true,
         message: new_image_path,

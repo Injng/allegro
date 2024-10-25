@@ -13,8 +13,10 @@ export const actions: Actions = {
     const data = await request.formData();
     const name = data.get("name");
     let movements: number | null = Number(data.get("movements"));
-    const composer = data.get("composer");
-    const songwriter = data.get("songwriter");
+    const composerIds =
+      data.get("composers")?.toString().split(",").map(Number) || [];
+    const songwriterIds =
+      data.get("songwriters")?.toString().split(",").map(Number) || null;
     const description = data.get("description");
     const token = cookies.get("token");
 
@@ -24,15 +26,8 @@ export const actions: Actions = {
     }
 
     // ensure artist is not empty
-    const composer_id = Number(composer);
-    if (isNaN(composer_id) || composer_id <= 0) {
+    if (composerIds.length === 0) {
       return fail(400, { error: "Composer cannot be empty" });
-    }
-
-    // make songwrtier optional
-    let songwriter_id: number | null = Number(songwriter);
-    if (isNaN(songwriter_id) || songwriter_id <= 0) {
-      songwriter_id = null;
     }
 
     // make movements optional
@@ -44,8 +39,8 @@ export const actions: Actions = {
       const response = await api.post("/music/add/piece", {
         name,
         movements,
-        composer_id,
-        songwriter_id,
+        composer_ids: composerIds,
+        songwriter_ids: songwriterIds,
         description,
         token,
       });
@@ -64,7 +59,8 @@ export const actions: Actions = {
     // get form data
     const data = await request.formData();
     const name = data.get("name");
-    const performer = data.get("performer");
+    const performerIds =
+      data.get("performers")?.toString().split(",").map(Number) || [];
     const description = data.get("description");
     const image = data.get("file") as File;
     const token = cookies.get("token");
@@ -75,18 +71,17 @@ export const actions: Actions = {
     }
 
     // ensure artist is not empty
-    const performer_id = Number(performer);
-    if (isNaN(performer_id) || performer_id <= 0) {
+    if (performerIds.length === 0) {
       return fail(400, { error: "Performer cannot be empty" });
     }
 
     try {
-      const has_image = image.size > 0;
+      const hasImage = image.size > 0;
       const response = await api.post("/music/add/release", {
         name,
-        performer_id,
+        performer_ids: performerIds,
         description,
-        has_image,
+        has_image: hasImage,
         token,
       });
 
@@ -128,11 +123,11 @@ export const actions: Actions = {
     }
 
     try {
-      const has_image = image.size > 0;
+      const hasImage = image.size > 0;
       const response = await api.post("/music/add/artist", {
         name,
         description,
-        has_image,
+        has_image: hasImage,
         artist_type,
         token,
       });

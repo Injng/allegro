@@ -60,29 +60,52 @@
     let pieceDialogOpen = false;
     let releaseDialogOpen = false;
 
+    // handle selected artists
+    let selectedPerformers: Artist[] = [];
+    let selectedComposers: Artist[] = [];
+    let selectedSongwriters: Artist[] = [];
+
     // handle search dialog select
-    let selectedPerformerName = "";
-    let selectedPerformerId: number = 0;
-    let selectedComposerName = "";
-    let selectedComposerId: number = 0;
-    let selectedSongwriterName = "";
-    let selectedSongwriterId: number = 0;
     function handleArtistSelect(
         artist: Artist,
         artist_type: "performer" | "composer" | "songwriter",
     ) {
         if (artist_type === "performer") {
-            selectedPerformerName = artist.name;
-            selectedPerformerId = artist.id;
-            performerDialogOpen = false;
+            // check if already selected
+            const index = selectedPerformers.findIndex(
+                (p) => p.id === artist.id,
+            );
+            if (index === -1) {
+                selectedPerformers = [...selectedPerformers, artist];
+            } else {
+                selectedPerformers = selectedPerformers.filter(
+                    (p) => p.id !== artist.id,
+                );
+            }
         } else if (artist_type === "composer") {
-            selectedComposerName = artist.name;
-            selectedComposerId = artist.id;
-            composerDialogOpen = false;
+            // check if already selected
+            const index = selectedComposers.findIndex(
+                (c) => c.id === artist.id,
+            );
+            if (index === -1) {
+                selectedComposers = [...selectedComposers, artist];
+            } else {
+                selectedComposers = selectedComposers.filter(
+                    (c) => c.id !== artist.id,
+                );
+            }
         } else if (artist_type === "songwriter") {
-            selectedSongwriterName = artist.name;
-            selectedSongwriterId = artist.id;
-            songwriterDialogOpen = false;
+            // check if already selected
+            const index = selectedSongwriters.findIndex(
+                (s) => s.id === artist.id,
+            );
+            if (index === -1) {
+                selectedSongwriters = [...selectedSongwriters, artist];
+            } else {
+                selectedSongwriters = selectedSongwriters.filter(
+                    (s) => s.id !== artist.id,
+                );
+            }
         }
     }
 
@@ -120,42 +143,53 @@
         try {
             const response = await api.get("/music/get/pieces");
             for (let p of response.data.message) {
-                // get the composer
-                const composerResponse = await api.post("/music/get/composer", {
-                    id: p.composer_id,
-                });
-                const composerData = composerResponse.data.message;
-                let composer: Artist = {
-                    id: composerData.id,
-                    name: composerData.name,
-                    description: composerData.description,
-                    artist_type: "composer",
-                    image_path: composerData.image_path,
-                };
+                // get the composers
+                let composers: Artist[] = [];
+                for (let composer_id of p.composer_ids) {
+                    const composerResponse = await api.post(
+                        "/music/get/composer",
+                        {
+                            id: composer_id,
+                        },
+                    );
+                    const composerData = composerResponse.data.message;
+                    let composer: Artist = {
+                        id: composerData.id,
+                        name: composerData.name,
+                        description: composerData.description,
+                        artist_type: "composer",
+                        image_path: composerData.image_path,
+                    };
+                    composers.push(composer);
+                }
 
-                // get the songwriter
-                const songwriterResponse = await api.post(
-                    "/music/get/songwriter",
-                    {
-                        id: p.songwriter_id,
-                    },
-                );
-                const songwriterData = songwriterResponse.data.message;
-                let songwriter: Artist = {
-                    id: songwriterData.id,
-                    name: songwriterData.name,
-                    description: songwriterData.description,
-                    artist_type: "songwriter",
-                    image_path: songwriterData.image_path,
-                };
+                // get the songwriters
+                let songwriters: Artist[] = [];
+                for (let songwriter_id of p.songwriter_ids) {
+                    const songwriterResponse = await api.post(
+                        "/music/get/songwriter",
+                        {
+                            id: songwriter_id,
+                        },
+                    );
+                    const songwriterData = songwriterResponse.data.message;
+                    let songwriter: Artist = {
+                        id: songwriterData.id,
+                        name: songwriterData.name,
+                        description: songwriterData.description,
+                        artist_type: "songwriter",
+                        image_path: songwriterData.image_path,
+                    };
+                    songwriters.push(songwriter);
+                }
 
                 // construct the piece
                 let piece: Piece = {
                     id: p.id,
                     name: p.name,
                     movements: p.movements,
-                    composer: composer,
-                    songwriter: songwriter,
+                    composers,
+                    songwriters,
                     description: p.description,
                 };
                 pieces.push(piece);
@@ -179,27 +213,31 @@
         try {
             const response = await api.get("/music/get/releases");
             for (let r of response.data.message) {
-                // get the performer
-                const performerResponse = await api.post(
-                    "/music/get/performer",
-                    {
-                        id: r.performer_id,
-                    },
-                );
-                const data = performerResponse.data.message;
-                let performer: Artist = {
-                    id: data.id,
-                    name: data.name,
-                    description: data.description,
-                    artist_type: "performer",
-                    image_path: data.image_path,
-                };
+                // get the performers
+                let performers: Artist[] = [];
+                for (let performer_id of r.performer_ids) {
+                    const performerResponse = await api.post(
+                        "/music/get/performer",
+                        {
+                            id: performer_id,
+                        },
+                    );
+                    const data = performerResponse.data.message;
+                    let performer: Artist = {
+                        id: data.id,
+                        name: data.name,
+                        description: data.description,
+                        artist_type: "performer",
+                        image_path: data.image_path,
+                    };
+                    performers.push(performer);
+                }
 
                 // construct the release
                 let release: Release = {
                     id: r.id,
                     name: r.name,
-                    performer: performer,
+                    performers,
                     description: r.description,
                     image_path: r.image_path,
                 };
@@ -442,19 +480,37 @@
                             >Performer*</Label
                         >
                         <div class="col-span-3">
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                {#each selectedPerformers as performer}
+                                    <div
+                                        class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
+                                    >
+                                        {performer.name}
+                                        <button
+                                            class="text-slate-400 hover:text-slate-200"
+                                            on:click={() =>
+                                                handleArtistSelect(
+                                                    performer,
+                                                    "performer",
+                                                )}>×</button
+                                        >
+                                    </div>
+                                {/each}
+                            </div>
                             <Button
                                 class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                 on:click={() => {
                                     getArtists("performer");
                                 }}
                             >
-                                {selectedPerformerName ||
-                                    "Search for a performer..."}
+                                Add performer...
                             </Button>
                             <input
                                 type="hidden"
-                                name="performer"
-                                value={selectedPerformerId}
+                                name="performers"
+                                value={selectedPerformers
+                                    .map((p) => p.id)
+                                    .join(",")}
                             />
                             <Command.Dialog
                                 bind:open={performerDialogOpen}
@@ -562,19 +618,37 @@
                                 >Composer*</Label
                             >
                             <div class="col-span-3">
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    {#each selectedComposers as composer}
+                                        <div
+                                            class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
+                                        >
+                                            {composer.name}
+                                            <button
+                                                class="text-slate-400 hover:text-slate-200"
+                                                on:click={() =>
+                                                    handleArtistSelect(
+                                                        composer,
+                                                        "composer",
+                                                    )}>×</button
+                                            >
+                                        </div>
+                                    {/each}
+                                </div>
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
                                         getArtists("composer");
                                     }}
                                 >
-                                    {selectedComposerName ||
-                                        "Search for a composer..."}
+                                    Add composer...
                                 </Button>
                                 <input
                                     type="hidden"
-                                    name="composer"
-                                    value={selectedComposerId}
+                                    name="composers"
+                                    value={selectedComposers
+                                        .map((p) => p.id)
+                                        .join(",")}
                                 />
                                 <Command.Dialog
                                     bind:open={composerDialogOpen}
@@ -623,19 +697,37 @@
                                 >Songwriter</Label
                             >
                             <div class="col-span-3">
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    {#each selectedSongwriters as songwriter}
+                                        <div
+                                            class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
+                                        >
+                                            {songwriter.name}
+                                            <button
+                                                class="text-slate-400 hover:text-slate-200"
+                                                on:click={() =>
+                                                    handleArtistSelect(
+                                                        songwriter,
+                                                        "songwriter",
+                                                    )}>×</button
+                                            >
+                                        </div>
+                                    {/each}
+                                </div>
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
                                         getArtists("songwriter");
                                     }}
                                 >
-                                    {selectedSongwriterName ||
-                                        "Search for a songwriter..."}
+                                    Add songwriter...
                                 </Button>
                                 <input
                                     type="hidden"
-                                    name="songwriter"
-                                    value={selectedSongwriterId}
+                                    name="songwriters"
+                                    value={selectedSongwriters
+                                        .map((p) => p.id)
+                                        .join(",")}
                                 />
                                 <Command.Dialog
                                     bind:open={songwriterDialogOpen}
@@ -728,19 +820,37 @@
                                 >Performer*</Label
                             >
                             <div class="col-span-3">
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    {#each selectedPerformers as performer}
+                                        <div
+                                            class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
+                                        >
+                                            {performer.name}
+                                            <button
+                                                class="text-slate-400 hover:text-slate-200"
+                                                on:click={() =>
+                                                    handleArtistSelect(
+                                                        performer,
+                                                        "performer",
+                                                    )}>×</button
+                                            >
+                                        </div>
+                                    {/each}
+                                </div>
                                 <Button
                                     class="bg-slate-800 hover:bg-slate-700 text-slate-50"
                                     on:click={() => {
                                         getArtists("performer");
                                     }}
                                 >
-                                    {selectedPerformerName ||
-                                        "Search for a performer..."}
+                                    Add performer...
                                 </Button>
                                 <input
                                     type="hidden"
-                                    name="performer"
-                                    value={selectedPerformerId}
+                                    name="performers"
+                                    value={selectedPerformers
+                                        .map((p) => p.id)
+                                        .join(",")}
                                 />
                                 <Command.Dialog
                                     bind:open={performerDialogOpen}

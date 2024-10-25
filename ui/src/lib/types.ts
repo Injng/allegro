@@ -1,7 +1,7 @@
 export type Release = {
   id: number;
   name: string;
-  performer: Artist;
+  performers: Artist[];
   description: string | null;
   image_path: string | null;
 };
@@ -10,8 +10,8 @@ export type Piece = {
   id: number;
   name: string;
   movements: number | null;
-  composer: Artist;
-  songwriter: Artist | null;
+  composers: Artist[];
+  songwriters: Artist[] | null;
   description: string | null;
 };
 
