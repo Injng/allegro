@@ -87,9 +87,8 @@ fn db_addrecording<T>(
     addrecording_req: AddRecordingRequest,
     conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
 ) -> Response<String> {
-    use crate::schema::{recording_performers, recordings};
+    use crate::schema::{pieces, recording_performers, recordings};
 
-    println!("{:?}", addrecording_req);
     // check for admin privileges
     let is_admin: bool = check_admin(addrecording_req.token.clone(), conn);
     if !is_admin {
@@ -99,12 +98,28 @@ fn db_addrecording<T>(
         };
     }
 
+    // get the piece name from the id
+    let piece_name_res = pieces::dsl::pieces
+        .filter(pieces::dsl::id.eq(addrecording_req.piece_id))
+        .select(pieces::dsl::name)
+        .first::<String>(conn);
+    let piece_name: String = match piece_name_res {
+        Ok(_) => piece_name_res.unwrap(),
+        Err(_) => {
+            return Response {
+                success: false,
+                message: "Piece id incorrect or piece not found".to_string(),
+            };
+        }
+    };
+
     // insert the new recording into the database
     let new_recording = insert::NewRecording {
+        piece_name,
         piece_id: addrecording_req.piece_id,
         release_id: addrecording_req.release_id,
         track_number: addrecording_req.track_number,
-        file_path: None, // Initially set to None, will update after getting ID
+        file_path: None, // initially set to None, will update after getting ID
     };
 
     // insert recording and get its ID
@@ -397,7 +412,7 @@ pub async fn addpiece(
     // return the appropriate response and handle errors
     match addpiece_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -423,7 +438,7 @@ pub async fn addrelease(
     // return the appropriate response and handle errors
     match addrelease_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -479,7 +494,7 @@ pub async fn addartist(
     // return the appropriate response and handle errors
     match addartist_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)

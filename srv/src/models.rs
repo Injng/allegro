@@ -161,10 +161,11 @@ pub struct ReleasePerformer {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct DbRecording {
     pub id: i32,
+    pub piece_name: String,
     pub piece_id: i32,
     pub release_id: i32,
     pub track_number: i32,
-    pub file_path: String,
+    pub file_path: Option<String>,
 }
 
 impl DbRecording {
@@ -172,10 +173,11 @@ impl DbRecording {
     pub fn new() -> Self {
         DbRecording {
             id: -1,
+            piece_name: String::new(),
             piece_id: -1,
             release_id: -1,
             track_number: -1,
-            file_path: "".to_string(),
+            file_path: None,
         }
     }
 }

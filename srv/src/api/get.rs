@@ -229,7 +229,7 @@ fn db_getrecording<T>(
         .filter(recordings::dsl::id.eq(recording_req.id))
         .first::<DbRecording>(conn);
 
-    let recording_basic: DbRecording = match recording_res {
+    let db_recording: DbRecording = match recording_res {
         Ok(_) => recording_res.unwrap(),
         Err(_) => {
             return Response {
@@ -248,11 +248,11 @@ fn db_getrecording<T>(
 
     // construct the full recording object
     let recording = Recording {
-        id: recording_basic.id,
-        piece_id: recording_basic.piece_id,
-        release_id: recording_basic.release_id,
+        id: db_recording.id,
+        piece_id: db_recording.piece_id,
+        release_id: db_recording.release_id,
         performer_ids,
-        track_number: recording_basic.track_number,
+        track_number: db_recording.track_number,
     };
 
     Response {
@@ -509,7 +509,7 @@ pub async fn getpieces(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> Htt
     // return the appropriate response and handle errors
     match getpieces_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -535,7 +535,7 @@ pub async fn getpiece(
     // return the appropriate response and handle errors
     match getpiece_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -558,7 +558,7 @@ pub async fn getreleases(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> H
     // return the appropriate response and handle errors
     match getreleases_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -584,7 +584,7 @@ pub async fn getrelease(
     // return the appropriate response and handle errors
     match getrelease_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -607,7 +607,7 @@ pub async fn getperformers(pool: Data<Pool<ConnectionManager<PgConnection>>>) ->
     // return the appropriate response and handle errors
     match getperformers_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -634,7 +634,7 @@ pub async fn getperformer(
     // return the appropriate response and handle errors
     match getperformer_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -657,7 +657,7 @@ pub async fn getcomposers(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> 
     // return the appropriate response and handle errors
     match getcomposers_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -683,7 +683,7 @@ pub async fn getcomposer(
     // return the appropriate response and handle errors
     match getcomposer_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -706,7 +706,7 @@ pub async fn getsongwriters(pool: Data<Pool<ConnectionManager<PgConnection>>>) -
     // return the appropriate response and handle errors
     match getsongwriters_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
@@ -733,7 +733,7 @@ pub async fn getsongwriter(
     // return the appropriate response and handle errors
     match getsongwriter_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)

@@ -1,5 +1,6 @@
 CREATE TABLE recordings (
     id SERIAL PRIMARY KEY,
+    piece_name VARCHAR NOT NULL,
     piece_id INTEGER NOT NULL,
     release_id INTEGER NOT NULL,
     track_number INTEGER UNIQUE NOT NULL,
@@ -16,6 +17,7 @@ CREATE TABLE recording_performers (
     FOREIGN KEY (performer_id) REFERENCES performers(id)
 );
 
+CREATE INDEX idx_recording_piece_name ON recordings(piece_name);
 CREATE INDEX idx_recording_piece ON recordings(piece_id);
 CREATE INDEX idx_recording_release ON recordings(release_id);
 CREATE INDEX idx_recording_performers_recording ON recording_performers(recording_id);

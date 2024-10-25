@@ -67,7 +67,12 @@ async fn main() -> io::Result<()> {
             .service(api::get::getreleases)
             .service(api::get::getsongwriter)
             .service(api::get::getsongwriters)
+            .service(api::search::searchcomposer)
             .service(api::search::searchperformer)
+            .service(api::search::searchpiece)
+            .service(api::search::searchrecording)
+            .service(api::search::searchrelease)
+            .service(api::search::searchsongwriter)
     })
     .bind("0.0.0.0:9000")?
     .run()

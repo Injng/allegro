@@ -68,6 +68,7 @@ pub struct NewPiece {
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::recordings)]
 pub struct NewRecording {
+    pub piece_name: String,
     pub piece_id: i32,
     pub release_id: i32,
     pub track_number: i32,

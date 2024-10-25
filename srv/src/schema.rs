@@ -59,6 +59,7 @@ diesel::table! {
 diesel::table! {
     recordings (id) {
         id -> Int4,
+        piece_name -> Varchar,
         piece_id -> Int4,
         release_id -> Int4,
         track_number -> Int4,

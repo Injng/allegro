@@ -224,7 +224,7 @@ pub async fn countuser(pool: Data<Pool<ConnectionManager<PgConnection>>>) -> Htt
     // return the appropriate response and handle errors
     match countuser_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Ok()
                 .content_type("application/json")
                 .json(response)
@@ -250,7 +250,7 @@ pub async fn adduser(
     // return the appropriate response and handle errors
     match adduser_response {
         Ok(response) => {
-            // handle case where server successfuly processes the request
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)
