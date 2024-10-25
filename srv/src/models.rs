@@ -159,20 +159,22 @@ pub struct ReleasePerformer {
 #[derive(Queryable, Selectable, Serialize, Deserialize)]
 #[diesel(table_name = crate::schema::recordings)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct Recording {
+pub struct DbRecording {
     pub id: i32,
     pub piece_id: i32,
     pub release_id: i32,
+    pub track_number: i32,
     pub file_path: String,
 }
 
-impl Recording {
+impl DbRecording {
     /// create an empty recording
     pub fn new() -> Self {
-        Recording {
+        DbRecording {
             id: -1,
             piece_id: -1,
             release_id: -1,
+            track_number: -1,
             file_path: "".to_string(),
         }
     }

@@ -2,7 +2,8 @@ CREATE TABLE recordings (
     id SERIAL PRIMARY KEY,
     piece_id INTEGER NOT NULL,
     release_id INTEGER NOT NULL,
-    file_path VARCHAR NOT NULL,
+    track_number INTEGER UNIQUE NOT NULL,
+    file_path VARCHAR,
     FOREIGN KEY (piece_id) REFERENCES pieces(id),
     FOREIGN KEY (release_id) REFERENCES releases(id)
 );

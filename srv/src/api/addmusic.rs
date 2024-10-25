@@ -45,7 +45,7 @@ pub struct AddRecordingRequest {
     pub piece_id: i32,
     pub release_id: i32,
     pub performer_ids: Vec<i32>,
-    pub file_path: String,
+    pub track_number: i32,
     pub token: String,
 }
 
@@ -80,6 +80,63 @@ fn check_admin(
     };
 
     return true;
+}
+
+/// Add a recording to the database, returning the file path of the new recording
+fn db_addrecording<T>(
+    addrecording_req: AddRecordingRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<String> {
+    use crate::schema::{recording_performers, recordings};
+
+    println!("{:?}", addrecording_req);
+    // check for admin privileges
+    let is_admin: bool = check_admin(addrecording_req.token.clone(), conn);
+    if !is_admin {
+        return Response {
+            success: false,
+            message: "User is not an admin".to_string(),
+        };
+    }
+
+    // insert the new recording into the database
+    let new_recording = insert::NewRecording {
+        piece_id: addrecording_req.piece_id,
+        release_id: addrecording_req.release_id,
+        track_number: addrecording_req.track_number,
+        file_path: None, // Initially set to None, will update after getting ID
+    };
+
+    // insert recording and get its ID
+    let recording_id: i32 = diesel::insert_into(recordings::dsl::recordings)
+        .values(&new_recording)
+        .returning(recordings::dsl::id)
+        .get_result(conn)
+        .unwrap();
+
+    // generate the file path using the recording ID
+    let new_file_path = format!("recording-{}", recording_id);
+
+    // update the recording with the generated file path
+    diesel::update(recordings::dsl::recordings.find(recording_id))
+        .set(recordings::dsl::file_path.eq(&new_file_path))
+        .execute(conn)
+        .unwrap();
+
+    // insert performer relationships
+    for performer_id in addrecording_req.performer_ids {
+        let _ = diesel::insert_into(recording_performers::table)
+            .values((
+                recording_performers::recording_id.eq(recording_id),
+                recording_performers::performer_id.eq(performer_id),
+            ))
+            .execute(conn);
+    }
+
+    Response {
+        success: true,
+        message: new_file_path,
+    }
 }
 
 /// Add a piece to the database
@@ -367,6 +424,36 @@ pub async fn addrelease(
     match addrelease_response {
         Ok(response) => {
             // handle case where server successfuly processes the request
+            HttpResponse::Created()
+                .content_type("application/json")
+                .json(response)
+        }
+        _ => {
+            // handle case where server error occurs
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+/// Add a recording to the database
+#[post("/music/add/recording")]
+pub async fn addrecording(
+    addrecording_req: Json<AddRecordingRequest>,
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+) -> HttpResponse {
+    // get the addrecording response from database
+    println!("reached 1");
+    let mut conn = pool.get().expect("Connection pool error");
+    let addrecording_response =
+        web::block(move || db_addrecording::<String>(addrecording_req.into_inner(), &mut conn))
+            .await;
+
+    println!("reached 2");
+
+    // return the appropriate response and handle errors
+    match addrecording_response {
+        Ok(response) => {
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)

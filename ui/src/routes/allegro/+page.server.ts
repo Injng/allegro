@@ -8,6 +8,62 @@ const api = axios.create({
 });
 
 export const actions: Actions = {
+  addrecording: async ({ request, cookies }) => {
+    // get form data
+    const data = await request.formData();
+    const pieceId = Number(data.get("piece"));
+    const releaseId = Number(data.get("release"));
+    const performerIds =
+      data.get("performers")?.toString().split(",").map(Number) || [];
+    const trackNumber = Number(data.get("track_number"));
+    const recording = data.get("file") as File;
+    const token = cookies.get("token");
+
+    // ensure piece is not empty
+    if (isNaN(pieceId) || pieceId <= 0) {
+      return fail(400, { error: "Piece cannot be empty" });
+    }
+
+    // ensure release is not empty
+    if (isNaN(releaseId) || releaseId <= 0) {
+      return fail(400, { error: "Release cannot be empty" });
+    }
+
+    // ensure artist is not empty
+    if (performerIds.length === 0) {
+      return fail(400, { error: "Composer cannot be empty" });
+    }
+
+    try {
+      const response = await api.post("/music/add/recording", {
+        piece_id: pieceId,
+        release_id: releaseId,
+        performer_ids: performerIds,
+        track_number: trackNumber,
+        token,
+      });
+
+      if (!response.data.success) {
+        return fail(400, response.data.message);
+      }
+
+      // upload recording
+      let recordingPath = "";
+      if (recording.size > 0) {
+        const fileName = response.data.message;
+        recordingPath = `static/uploads/${fileName}`;
+        await writeFile(
+          recordingPath,
+          Buffer.from(await recording.arrayBuffer()),
+        );
+      }
+
+      return { success: true };
+    } catch {
+      return fail(400, { error: "Server error" });
+    }
+  },
+
   addpiece: async ({ request, cookies }) => {
     // get form data
     const data = await request.formData();

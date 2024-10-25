@@ -357,223 +357,251 @@
             </Tabs.List>
 
             <Tabs.Content value="recording" class="space-y-4">
-                <div class="grid gap-4 py-4">
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="piece" class="text-right text-slate-400"
-                            >Piece*</Label
-                        >
-                        <div class="col-span-3">
-                            <Button
-                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                                on:click={() => {
-                                    getPieces();
-                                }}
+                <form
+                    method="POST"
+                    enctype="multipart/form-data"
+                    action="?/addrecording"
+                    use:enhance={handleSubmit}
+                >
+                    <div class="grid gap-4 py-4">
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="piece" class="text-right text-slate-400"
+                                >Piece*</Label
                             >
-                                {selectedPieceName || "Search for a piece..."}
-                            </Button>
-                            <input
-                                type="hidden"
-                                name="piece"
-                                value={selectedPieceId}
-                            />
-                            <Command.Dialog
-                                bind:open={pieceDialogOpen}
-                                class="bg-slate-900 border border-slate-700"
-                            >
-                                <Command.Input
-                                    placeholder="Search pieces..."
-                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
-                                    bind:value={pieceSearch}
-                                />
-                                <Command.List
-                                    class="bg-slate-900 text-slate-50"
+                            <div class="col-span-3">
+                                <Button
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                    on:click={() => {
+                                        getPieces();
+                                    }}
                                 >
-                                    {#if loadingPieces}
-                                        <Command.Empty
-                                            class="py-6 text-center text-sm text-slate-400"
-                                        >
-                                            Loading...
-                                        </Command.Empty>
-                                    {:else}
-                                        <Command.Group class="p-1">
-                                            {#each pieces as piece (piece.id)}
-                                                <Command.Item
-                                                    value={piece.name}
-                                                    onSelect={() => {
-                                                        handlePieceSelect(
-                                                            piece,
-                                                        );
-                                                    }}
-                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
-                                                >
-                                                    {piece.name}
-                                                </Command.Item>
-                                            {/each}
-                                        </Command.Group>
-                                    {/if}
-                                </Command.List>
-                            </Command.Dialog>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="release" class="text-right text-slate-400"
-                            >Release*</Label
-                        >
-                        <div class="col-span-3">
-                            <Button
-                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                                on:click={() => {
-                                    getReleases();
-                                }}
-                            >
-                                {selectedReleaseName ||
-                                    "Search for a release..."}
-                            </Button>
-                            <input
-                                type="hidden"
-                                name="release"
-                                value={selectedReleaseId}
-                            />
-                            <Command.Dialog
-                                bind:open={releaseDialogOpen}
-                                class="bg-slate-900 border border-slate-700"
-                            >
-                                <Command.Input
-                                    placeholder="Search pieces..."
-                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
-                                    bind:value={releaseSearch}
+                                    {selectedPieceName ||
+                                        "Search for a piece..."}
+                                </Button>
+                                <input
+                                    type="hidden"
+                                    name="piece"
+                                    value={selectedPieceId}
                                 />
-                                <Command.List
-                                    class="bg-slate-900 text-slate-50"
+                                <Command.Dialog
+                                    bind:open={pieceDialogOpen}
+                                    class="bg-slate-900 border border-slate-700"
                                 >
-                                    {#if loadingReleases}
-                                        <Command.Empty
-                                            class="py-6 text-center text-sm text-slate-400"
-                                        >
-                                            Loading...
-                                        </Command.Empty>
-                                    {:else}
-                                        <Command.Group class="p-1">
-                                            {#each releases as release (release.id)}
-                                                <Command.Item
-                                                    value={release.name}
-                                                    onSelect={() => {
-                                                        handleReleaseSelect(
-                                                            release,
-                                                        );
-                                                    }}
-                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
-                                                >
-                                                    {release.name}
-                                                </Command.Item>
-                                            {/each}
-                                        </Command.Group>
-                                    {/if}
-                                </Command.List>
-                            </Command.Dialog>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="performer" class="text-right text-slate-400"
-                            >Performer*</Label
-                        >
-                        <div class="col-span-3">
-                            <div class="flex flex-wrap gap-2 mb-2">
-                                {#each selectedPerformers as performer}
-                                    <div
-                                        class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
+                                    <Command.Input
+                                        placeholder="Search pieces..."
+                                        class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                        bind:value={pieceSearch}
+                                    />
+                                    <Command.List
+                                        class="bg-slate-900 text-slate-50"
                                     >
-                                        {performer.name}
-                                        <button
-                                            class="text-slate-400 hover:text-slate-200"
-                                            on:click={() =>
-                                                handleArtistSelect(
-                                                    performer,
-                                                    "performer",
-                                                )}>×</button
-                                        >
-                                    </div>
-                                {/each}
+                                        {#if loadingPieces}
+                                            <Command.Empty
+                                                class="py-6 text-center text-sm text-slate-400"
+                                            >
+                                                Loading...
+                                            </Command.Empty>
+                                        {:else}
+                                            <Command.Group class="p-1">
+                                                {#each pieces as piece (piece.id)}
+                                                    <Command.Item
+                                                        value={piece.name}
+                                                        onSelect={() => {
+                                                            handlePieceSelect(
+                                                                piece,
+                                                            );
+                                                        }}
+                                                        class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                    >
+                                                        {piece.name}
+                                                    </Command.Item>
+                                                {/each}
+                                            </Command.Group>
+                                        {/if}
+                                    </Command.List>
+                                </Command.Dialog>
                             </div>
-                            <Button
-                                class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                                on:click={() => {
-                                    getArtists("performer");
-                                }}
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                for="release"
+                                class="text-right text-slate-400"
+                                >Release*</Label
                             >
-                                Add performer...
-                            </Button>
-                            <input
-                                type="hidden"
-                                name="performers"
-                                value={selectedPerformers
-                                    .map((p) => p.id)
-                                    .join(",")}
-                            />
-                            <Command.Dialog
-                                bind:open={performerDialogOpen}
-                                class="bg-slate-900 border border-slate-700"
-                            >
-                                <Command.Input
-                                    placeholder="Search artists..."
-                                    class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
-                                    bind:value={artistSearch}
-                                />
-                                <Command.List
-                                    class="bg-slate-900 text-slate-50"
+                            <div class="col-span-3">
+                                <Button
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                    on:click={() => {
+                                        getReleases();
+                                    }}
                                 >
-                                    {#if loadingArtists}
-                                        <Command.Empty
-                                            class="py-6 text-center text-sm text-slate-400"
+                                    {selectedReleaseName ||
+                                        "Search for a release..."}
+                                </Button>
+                                <input
+                                    type="hidden"
+                                    name="release"
+                                    value={selectedReleaseId}
+                                />
+                                <Command.Dialog
+                                    bind:open={releaseDialogOpen}
+                                    class="bg-slate-900 border border-slate-700"
+                                >
+                                    <Command.Input
+                                        placeholder="Search pieces..."
+                                        class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                        bind:value={releaseSearch}
+                                    />
+                                    <Command.List
+                                        class="bg-slate-900 text-slate-50"
+                                    >
+                                        {#if loadingReleases}
+                                            <Command.Empty
+                                                class="py-6 text-center text-sm text-slate-400"
+                                            >
+                                                Loading...
+                                            </Command.Empty>
+                                        {:else}
+                                            <Command.Group class="p-1">
+                                                {#each releases as release (release.id)}
+                                                    <Command.Item
+                                                        value={release.name}
+                                                        onSelect={() => {
+                                                            handleReleaseSelect(
+                                                                release,
+                                                            );
+                                                        }}
+                                                        class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                    >
+                                                        {release.name}
+                                                    </Command.Item>
+                                                {/each}
+                                            </Command.Group>
+                                        {/if}
+                                    </Command.List>
+                                </Command.Dialog>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label
+                                for="performer"
+                                class="text-right text-slate-400"
+                                >Performer*</Label
+                            >
+                            <div class="col-span-3">
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    {#each selectedPerformers as performer}
+                                        <div
+                                            class="bg-slate-700 px-2 py-1 rounded-md flex items-center gap-2"
                                         >
-                                            Loading...
-                                        </Command.Empty>
-                                    {:else}
-                                        <Command.Group class="p-1">
-                                            {#each artists as artist (artist.id)}
-                                                <Command.Item
-                                                    value={artist.name}
-                                                    onSelect={() =>
-                                                        handleArtistSelect(
-                                                            artist,
-                                                            "performer",
-                                                        )}
-                                                    class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
-                                                >
-                                                    {artist.name}
-                                                </Command.Item>
-                                            {/each}
-                                        </Command.Group>
-                                    {/if}
-                                </Command.List>
-                            </Command.Dialog>
+                                            {performer.name}
+                                            <button
+                                                class="text-slate-400 hover:text-slate-200"
+                                                on:click={() =>
+                                                    handleArtistSelect(
+                                                        performer,
+                                                        "performer",
+                                                    )}>×</button
+                                            >
+                                        </div>
+                                    {/each}
+                                </div>
+                                <Button
+                                    class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                                    on:click={() => {
+                                        getArtists("performer");
+                                    }}
+                                >
+                                    Add performer...
+                                </Button>
+                                <input
+                                    type="hidden"
+                                    name="performers"
+                                    value={selectedPerformers
+                                        .map((p) => p.id)
+                                        .join(",")}
+                                />
+                                <Command.Dialog
+                                    bind:open={performerDialogOpen}
+                                    class="bg-slate-900 border border-slate-700"
+                                >
+                                    <Command.Input
+                                        placeholder="Search artists..."
+                                        class="border-none bg-slate-900 text-slate-50 placeholder:text-slate-400"
+                                        bind:value={artistSearch}
+                                    />
+                                    <Command.List
+                                        class="bg-slate-900 text-slate-50"
+                                    >
+                                        {#if loadingArtists}
+                                            <Command.Empty
+                                                class="py-6 text-center text-sm text-slate-400"
+                                            >
+                                                Loading...
+                                            </Command.Empty>
+                                        {:else}
+                                            <Command.Group class="p-1">
+                                                {#each artists as artist (artist.id)}
+                                                    <Command.Item
+                                                        value={artist.name}
+                                                        onSelect={() =>
+                                                            handleArtistSelect(
+                                                                artist,
+                                                                "performer",
+                                                            )}
+                                                        class="cursor-pointer select-none relative text-slate-400 flex items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-slate-700 aria-selected:text-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-slate-800"
+                                                    >
+                                                        {artist.name}
+                                                    </Command.Item>
+                                                {/each}
+                                            </Command.Group>
+                                        {/if}
+                                    </Command.List>
+                                </Command.Dialog>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="track" class="text-right text-slate-400"
+                                >Track #</Label
+                            >
+                            <Input
+                                type="number"
+                                id="track"
+                                name="track"
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50"
+                                min={1}
+                                step={1}
+                                required
+                            />
+                        </div>
+
+                        <div class="grid grid-cols-4 items-center gap-4">
+                            <Label for="file" class="text-right text-slate-400"
+                                >Recording*</Label
+                            >
+                            <Input
+                                type="file"
+                                id="file"
+                                name="file"
+                                accept="audio/*"
+                                on:change={handleFileChange}
+                                class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
+                                required
+                            />
                         </div>
                     </div>
-
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <Label for="file" class="text-right text-slate-400"
-                            >Recording*</Label
+                    <div class="flex justify-end mt-4">
+                        <Button
+                            type="submit"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-50"
+                            >Add recording</Button
                         >
-                        <Input
-                            type="file"
-                            id="file"
-                            accept="audio/*"
-                            on:change={handleFileChange}
-                            class="col-span-3 bg-slate-800 border-slate-700 text-slate-50 file:bg-slate-700 file:text-slate-50 file:border-0"
-                            required
-                        />
                     </div>
-                </div>
-                <div class="flex justify-end mt-4">
-                    <Button
-                        type="submit"
-                        class="bg-slate-800 hover:bg-slate-700 text-slate-50"
-                        >Add recording</Button
-                    >
-                </div>
-            </Tabs.Content>
+                </form></Tabs.Content
+            >
 
             <Tabs.Content value="piece">
                 <form

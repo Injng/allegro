@@ -1,4 +1,4 @@
-use crate::models::{Composer, DbPiece, DbRelease, Performer, Songwriter};
+use crate::models::{Composer, DbPiece, DbRecording, DbRelease, Performer, Songwriter};
 use crate::{IdRequest, Response};
 
 use actix_web::web::{Data, Json};
@@ -6,6 +6,29 @@ use actix_web::{get, post, web, HttpResponse};
 use diesel::prelude::*;
 use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use serde::{Deserialize, Serialize};
+
+/// Represents a recording with all its associated data
+#[derive(Debug, Deserialize, Serialize)]
+pub struct Recording {
+    pub id: i32,
+    pub piece_id: i32,
+    pub release_id: i32,
+    pub performer_ids: Vec<i32>,
+    pub track_number: i32,
+}
+
+impl Recording {
+    /// Create an empty recording
+    pub fn new() -> Self {
+        Recording {
+            id: -1,
+            piece_id: -1,
+            release_id: -1,
+            performer_ids: Vec::new(),
+            track_number: -1,
+        }
+    }
+}
 
 /// Represents a release with all its associated data
 #[derive(Debug, Deserialize, Serialize)]
@@ -191,6 +214,50 @@ fn db_getrelease<T>(
     Response {
         success: true,
         message: release,
+    }
+}
+
+/// Get specific recording by id from the recordings index
+fn db_getrecording<T>(
+    recording_req: IdRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<Recording> {
+    use crate::schema::{recording_performers, recordings};
+
+    // get the basic recording data
+    let recording_res = recordings::dsl::recordings
+        .filter(recordings::dsl::id.eq(recording_req.id))
+        .first::<DbRecording>(conn);
+
+    let recording_basic: DbRecording = match recording_res {
+        Ok(_) => recording_res.unwrap(),
+        Err(_) => {
+            return Response {
+                success: false,
+                message: Recording::new(),
+            };
+        }
+    };
+
+    // get all performer IDs for this recording
+    let performer_ids: Vec<i32> = recording_performers::dsl::recording_performers
+        .filter(recording_performers::dsl::recording_id.eq(recording_req.id))
+        .select(recording_performers::dsl::performer_id)
+        .load::<i32>(conn)
+        .unwrap_or_default();
+
+    // construct the full recording object
+    let recording = Recording {
+        id: recording_basic.id,
+        piece_id: recording_basic.piece_id,
+        release_id: recording_basic.release_id,
+        performer_ids,
+        track_number: recording_basic.track_number,
+    };
+
+    Response {
+        success: true,
+        message: recording,
     }
 }
 
@@ -667,6 +734,33 @@ pub async fn getsongwriter(
     match getsongwriter_response {
         Ok(response) => {
             // handle case where server successfuly processes the request
+            HttpResponse::Created()
+                .content_type("application/json")
+                .json(response)
+        }
+        _ => {
+            // handle case where server error occurs
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+/// Get specific recording
+#[post("/music/get/recording")]
+pub async fn getrecording(
+    recording_req: Json<IdRequest>,
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+) -> HttpResponse {
+    // get the getrecording response from database
+    let mut conn = pool.get().expect("Connection pool error");
+    let getrecording_response =
+        web::block(move || db_getrecording::<Recording>(recording_req.into_inner(), &mut conn))
+            .await;
+
+    // return the appropriate response and handle errors
+    match getrecording_response {
+        Ok(response) => {
+            // handle case where server successfully processes the request
             HttpResponse::Created()
                 .content_type("application/json")
                 .json(response)

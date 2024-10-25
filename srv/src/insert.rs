@@ -63,3 +63,13 @@ pub struct NewPiece {
     pub movements: Option<i32>,
     pub description: Option<String>,
 }
+
+/// Represents a new recording to insert into the recordings table
+#[derive(Insertable)]
+#[diesel(table_name = crate::schema::recordings)]
+pub struct NewRecording {
+    pub piece_id: i32,
+    pub release_id: i32,
+    pub track_number: i32,
+    pub file_path: Option<String>,
+}

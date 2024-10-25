@@ -61,7 +61,8 @@ diesel::table! {
         id -> Int4,
         piece_id -> Int4,
         release_id -> Int4,
-        file_path -> Varchar,
+        track_number -> Int4,
+        file_path -> Nullable<Varchar>,
     }
 }
 
