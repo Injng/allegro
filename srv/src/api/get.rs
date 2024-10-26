@@ -221,6 +221,65 @@ fn db_getrelease<T>(
     }
 }
 
+/// Gets recordings by release id from the recordings index
+fn db_getrecordings<T>(
+    release_req: IdRequest,
+    conn: &mut PooledConnection<ConnectionManager<PgConnection>>,
+) -> Response<Vec<Recording>> {
+    use crate::schema::{recording_performers, recordings};
+
+    // get all recording IDs for this release
+    let recording_ids: Vec<i32> = recordings::dsl::recordings
+        .filter(recordings::dsl::release_id.eq(release_req.id))
+        .select(recordings::dsl::id)
+        .load::<i32>(conn)
+        .unwrap_or_default();
+
+    // get all recordings for this release
+    let recordings_res = recordings::dsl::recordings
+        .filter(recordings::dsl::id.eq_any(&recording_ids))
+        .load::<DbRecording>(conn);
+    let db_recordings: Vec<DbRecording> = match recordings_res {
+        Ok(_) => recordings_res.unwrap(),
+        Err(_) => {
+            return Response {
+                success: false,
+                message: Vec::new(),
+            };
+        }
+    };
+
+    // for each recording, get all performer IDs
+    let mut recordings: Vec<Recording> = Vec::new();
+    for db_recording in db_recordings {
+        // get all performer IDs for this recording
+        let performer_ids: Vec<i32> = recording_performers::dsl::recording_performers
+            .filter(recording_performers::dsl::recording_id.eq(db_recording.id))
+            .select(recording_performers::dsl::performer_id)
+            .load::<i32>(conn)
+            .unwrap_or_default();
+
+        // construct the full recording object
+        let recording = Recording {
+            id: db_recording.id,
+            piece_name: db_recording.piece_name,
+            piece_id: db_recording.piece_id,
+            release_id: db_recording.release_id,
+            performer_ids,
+            track_number: db_recording.track_number,
+            file_path: db_recording.file_path,
+        };
+
+        // push the recording to the recordings vector
+        recordings.push(recording);
+    }
+
+    Response {
+        success: true,
+        message: recordings,
+    }
+}
+
 /// Get specific recording by id from the recordings index
 fn db_getrecording<T>(
     recording_req: IdRequest,
@@ -738,6 +797,33 @@ pub async fn getsongwriter(
 
     // return the appropriate response and handle errors
     match getsongwriter_response {
+        Ok(response) => {
+            // handle case where server successfully processes the request
+            HttpResponse::Created()
+                .content_type("application/json")
+                .json(response)
+        }
+        _ => {
+            // handle case where server error occurs
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+/// Get recordings by release id
+#[post("/music/get/recordings")]
+pub async fn getrecordings(
+    release_req: Json<IdRequest>,
+    pool: Data<Pool<ConnectionManager<PgConnection>>>,
+) -> HttpResponse {
+    // get the getrecordings response from database
+    let mut conn = pool.get().expect("Connection pool error");
+    let getrecordings_response =
+        web::block(move || db_getrecordings::<Vec<Recording>>(release_req.into_inner(), &mut conn))
+            .await;
+
+    // return the appropriate response and handle errors
+    match getrecordings_response {
         Ok(response) => {
             // handle case where server successfully processes the request
             HttpResponse::Created()

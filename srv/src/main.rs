@@ -63,6 +63,7 @@ async fn main() -> io::Result<()> {
             .service(api::get::getpiece)
             .service(api::get::getpieces)
             .service(api::get::getrecording)
+            .service(api::get::getrecordings)
             .service(api::get::getrelease)
             .service(api::get::getreleases)
             .service(api::get::getsongwriter)

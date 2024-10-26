@@ -57,7 +57,7 @@ export const actions: Actions = {
       let recordingPath = "";
       if (recording.size > 0) {
         const fileName = response.data.message;
-        recordingPath = `static/uploads/${fileName}`;
+        recordingPath = `static/recordings/${fileName}`;
         await writeFile(
           recordingPath,
           Buffer.from(await recording.arrayBuffer()),

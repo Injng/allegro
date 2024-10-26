@@ -20,3 +20,5 @@ vite.config.ts.timestamp-*
 
 uploads/*
 !uploads/.keep
+recordings/*
+!recordings/.keep
