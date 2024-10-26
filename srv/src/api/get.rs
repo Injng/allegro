@@ -11,10 +11,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Recording {
     pub id: i32,
+    pub piece_name: String,
     pub piece_id: i32,
     pub release_id: i32,
     pub performer_ids: Vec<i32>,
     pub track_number: i32,
+    pub file_path: Option<String>,
 }
 
 impl Recording {
@@ -22,10 +24,12 @@ impl Recording {
     pub fn new() -> Self {
         Recording {
             id: -1,
+            piece_name: String::new(),
             piece_id: -1,
             release_id: -1,
             performer_ids: Vec::new(),
             track_number: -1,
+            file_path: None,
         }
     }
 }
@@ -249,10 +253,12 @@ fn db_getrecording<T>(
     // construct the full recording object
     let recording = Recording {
         id: db_recording.id,
+        piece_name: db_recording.piece_name,
         piece_id: db_recording.piece_id,
         release_id: db_recording.release_id,
         performer_ids,
         track_number: db_recording.track_number,
+        file_path: db_recording.file_path,
     };
 
     Response {

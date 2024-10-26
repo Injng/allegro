@@ -2,12 +2,14 @@
     import type { Release } from "$lib/types";
     import { cn } from "$lib/utils";
     import * as ContextMenu from "$lib/ui/ui/context-menu/index.js";
+
     let className: string | undefined | null = undefined;
     export let release: Release;
     export let aspectRatio: "portrait" | "square" = "square";
     export let width: number;
     export let height: number;
     export { className as class };
+    console.log(release);
 </script>
 
 <div class={cn("space-y-3", className)} {...$$restProps}>
@@ -23,7 +25,7 @@
                             ? "aspect-[3/4]"
                             : "aspect-square",
                     )}
-                    src={release.cover}
+                    src={"/uploads/" + release.imagePath}
                     alt={release.name}
                 />
             </div>

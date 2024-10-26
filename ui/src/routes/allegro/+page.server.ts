@@ -1,4 +1,4 @@
-import type { Actions } from "./$types";
+import type { Actions, PageServerLoad } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { writeFile } from "fs/promises";
 import axios from "axios";
@@ -6,6 +6,12 @@ import axios from "axios";
 const api = axios.create({
   baseURL: "http://localhost:9000",
 });
+
+export const load: PageServerLoad = ({ cookies }) => {
+  return {
+    token: cookies.get("token") || null,
+  };
+};
 
 export const actions: Actions = {
   addrecording: async ({ request, cookies }) => {

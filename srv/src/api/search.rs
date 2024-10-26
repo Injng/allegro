@@ -112,10 +112,12 @@ fn db_searchrecording<T>(
         // construct the full recording object
         let recording = Recording {
             id: db_recording.id,
+            piece_name: db_recording.piece_name,
             piece_id: db_recording.piece_id,
             release_id: db_recording.release_id,
             performer_ids,
             track_number: db_recording.track_number,
+            file_path: db_recording.file_path,
         };
 
         // add the recording to the list of recordings

@@ -157,7 +157,7 @@
                         id: composerData.id,
                         name: composerData.name,
                         description: composerData.description,
-                        artist_type: "composer",
+                        artistType: "composer",
                         image_path: composerData.image_path,
                     };
                     composers.push(composer);
@@ -177,8 +177,8 @@
                         id: songwriterData.id,
                         name: songwriterData.name,
                         description: songwriterData.description,
-                        artist_type: "songwriter",
-                        image_path: songwriterData.image_path,
+                        artistType: "songwriter",
+                        imagePath: songwriterData.image_path,
                     };
                     songwriters.push(songwriter);
                 }
